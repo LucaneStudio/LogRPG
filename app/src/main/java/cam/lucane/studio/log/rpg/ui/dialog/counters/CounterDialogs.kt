@@ -1,4 +1,4 @@
-package cam.lucane.studio.log.rpg.ui.screen
+package cam.lucane.studio.log.rpg.ui.dialog.counters
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -56,13 +56,12 @@ fun CurrencyInputDialog(
     title: String,
     mode: CurrencyMode,
     onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit  // ✅ Retourne directement les crédits
+    onConfirm: (Int) -> Unit
 ) {
     var gold by remember { mutableStateOf("0") }
     var silver by remember { mutableStateOf("0") }
     var copper by remember { mutableStateOf("0") }
 
-    // ✅ Calcul en temps réel des crédits
     val totalCredits = when (mode) {
         CurrencyMode.SINGLE -> copper.toIntOrNull() ?: 0
         CurrencyMode.BY_TEN -> {

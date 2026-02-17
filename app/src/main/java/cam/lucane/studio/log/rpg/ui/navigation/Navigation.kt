@@ -6,8 +6,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import cam.lucane.studio.log.rpg.ui.screen.CharacterDetailScreen
-import cam.lucane.studio.log.rpg.ui.screen.CharacterListScreen
+import cam.lucane.studio.log.rpg.ui.screen.list.CharacterDetailScreen
+import cam.lucane.studio.log.rpg.ui.screen.list.CharacterListScreen
 
 object Routes {
     const val CHARACTER_LIST = "character_list"

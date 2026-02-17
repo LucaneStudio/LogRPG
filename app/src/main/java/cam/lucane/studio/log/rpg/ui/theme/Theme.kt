@@ -15,6 +15,7 @@ val AccentPurpleLight = Color(0xFFC4B8FF)
 val AccentRed         = Color(0xFFF7716A)
 val AccentGreen       = Color(0xFF5DE8C1)
 val AccentGold        = Color(0xFFF59E0B)
+val AccentCopper       = Color(0xFFB57434)
 
 val HealthRed         = Color(0xFFEF4444)
 val ManaBlue          = Color(0xFF6366F1)

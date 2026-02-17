@@ -1,149 +1,64 @@
-package cam.lucane.studio.log.rpg.ui.screen.tabs
+package cam.lucane.studio.log.rpg.ui.screen.detail.tabs.inventory
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Item
-import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.dialog.inventory.ItemDialog
+import cam.lucane.studio.log.rpg.ui.theme.AccentGold
+import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
+import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
+import cam.lucane.studio.log.rpg.ui.theme.AccentRed
+import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
+import cam.lucane.studio.log.rpg.ui.theme.HealthRed
+import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
+import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
-
-enum class ItemFilter { ALL, CONSUMABLE, EQUIPPED }
-
-@Composable
-fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
-    val items by viewModel.items.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
-    var currentFilter by remember { mutableStateOf(ItemFilter.ALL) }
-    var searchQuery by remember { mutableStateOf("") }
-
-    val filteredItems = remember(items, currentFilter, searchQuery) {
-        var result = when (currentFilter) {
-            ItemFilter.ALL -> items
-            ItemFilter.CONSUMABLE -> items.filter { it.isConsumable }
-            ItemFilter.EQUIPPED -> items.filter { it.isEquipped }
-        }
-        if (searchQuery.isNotBlank()) {
-            result = result.filter {
-                it.name.contains(searchQuery, ignoreCase = true) ||
-                        it.description.contains(searchQuery, ignoreCase = true) ||
-                        it.category?.contains(searchQuery, ignoreCase = true) == true ||
-                        it.notes?.contains(searchQuery, ignoreCase = true) == true
-            }
-        }
-        result
-    }
-
-    Scaffold(
-        containerColor = Color.Transparent,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                shape = RoundedCornerShape(16.dp),
-                containerColor = AccentPurple,
-            ) {
-                Icon(Icons.Default.Add, "Ajouter")
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Barre de recherche + filtres
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 10.dp, bottom = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    placeholder = "Rechercher un objet..."
-                )
-                // Filtres chips
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    item {
-                        FilterPill(
-                            label = "Tous (${items.size})",
-                            selected = currentFilter == ItemFilter.ALL,
-                            color = AccentPurple,
-                            onClick = { currentFilter = ItemFilter.ALL }
-                        )
-                    }
-                    item {
-                        FilterPill(
-                            label = "🧪 Consomm. (${items.count { it.isConsumable }})",
-                            selected = currentFilter == ItemFilter.CONSUMABLE,
-                            color = AccentRed,
-                            onClick = { currentFilter = ItemFilter.CONSUMABLE }
-                        )
-                    }
-                    item {
-                        FilterPill(
-                            label = "✓ Équipés (${items.count { it.isEquipped }})",
-                            selected = currentFilter == ItemFilter.EQUIPPED,
-                            color = AccentGreen,
-                            onClick = { currentFilter = ItemFilter.EQUIPPED }
-                        )
-                    }
-                }
-            }
-
-            if (filteredItems.isEmpty()) {
-                EmptySearchState(
-                    message = if (searchQuery.isBlank()) "Aucun objet" else "Aucun résultat pour \"$searchQuery\"",
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(
-                        start = 16.dp, end = 16.dp, bottom = 100.dp, top = 4.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredItems, key = { it.id }) { item ->
-                        ItemCard(item, viewModel)
-                    }
-                }
-            }
-        }
-    }
-
-    if (showAddDialog) {
-        ItemDialog(
-            title = "Nouvel objet",
-            onDismiss = { showAddDialog = false },
-            onConfirm = { item ->
-                viewModel.addItem(item.copy(characterId = characterId))
-                showAddDialog = false
-            }
-        )
-    }
-}
 
 @Composable
 fun ItemCard(item: Item, viewModel: CharacterDetailViewModel) {
@@ -308,6 +223,7 @@ fun ItemCard(item: Item, viewModel: CharacterDetailViewModel) {
                                     )
                                 }
                             }
+
                             IconButton(
                                 onClick = { showEditDialog = true },
                                 modifier = Modifier.size(28.dp)
@@ -444,202 +360,5 @@ private fun categoryEmoji(category: String?): String {
         category.contains("Bouclier", ignoreCase = true) -> "🛡️"
         category.contains("Lumière", ignoreCase = true) -> "🔦"
         else -> "🎒"
-    }
-}
-
-// ── Dialogue objet (ajout + édition) ────────────────────────────────────────
-
-@Composable
-fun ItemDialog(
-    title: String,
-    initialItem: Item? = null,
-    onDismiss: () -> Unit,
-    onConfirm: (Item) -> Unit
-) {
-    var name by remember { mutableStateOf(initialItem?.name ?: "") }
-    var description by remember { mutableStateOf(initialItem?.description ?: "") }
-    var quantity by remember { mutableStateOf((initialItem?.quantity ?: 1).toString()) }
-    var weight by remember { mutableStateOf(initialItem?.weight ?: "") }
-    var category by remember { mutableStateOf(initialItem?.category ?: "") }
-    var notes by remember { mutableStateOf(initialItem?.notes ?: "") }
-    var isConsumable by remember { mutableStateOf(initialItem?.isConsumable ?: false) }
-    var isEquipped by remember { mutableStateOf(initialItem?.isEquipped ?: false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it },
-                    label = { Text("Nom *") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = description, onValueChange = { description = it },
-                    label = { Text("Description *") },
-                    minLines = 2, maxLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = quantity, onValueChange = { quantity = it },
-                        label = { Text("Quantité") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = weight, onValueChange = { weight = it },
-                        label = { Text("Poids") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                OutlinedTextField(
-                    value = category, onValueChange = { category = it },
-                    label = { Text("Catégorie") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = notes, onValueChange = { notes = it },
-                    label = { Text("Notes") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                HorizontalDivider(color = BorderSubtle)
-                // Switches
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Consommable", fontSize = 14.sp, color = TextPrimary)
-                    Switch(
-                        checked = isConsumable,
-                        onCheckedChange = { isConsumable = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = AccentRed, checkedTrackColor = AccentRed.copy(alpha = 0.3f))
-                    )
-                }
-                if (!isConsumable) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Équipé", fontSize = 14.sp, color = TextPrimary)
-                        Switch(
-                            checked = isEquipped,
-                            onCheckedChange = { isEquipped = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = AccentGreen, checkedTrackColor = AccentGreen.copy(alpha = 0.3f))
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm(
-                        (initialItem ?: Item(characterId = 0, name = "", description = "")).copy(
-                            name = name,
-                            description = description,
-                            quantity = quantity.toIntOrNull() ?: 1,
-                            weight = weight.ifBlank { null },
-                            category = category.ifBlank { null },
-                            notes = notes.ifBlank { null },
-                            isConsumable = isConsumable,
-                            isEquipped = if (isConsumable) false else isEquipped
-                        )
-                    )
-                },
-                enabled = name.isNotBlank() && description.isNotBlank()
-            ) {
-                Text(if (initialItem == null) "Ajouter" else "Enregistrer")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
-        }
-    )
-}
-
-// ── Composants partagés ──────────────────────────────────────────────────────
-
-@Composable
-fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier.fillMaxWidth()
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text(placeholder, color = TextSecondary) },
-        leadingIcon = {
-            Icon(Icons.Default.Search, "Rechercher", tint = TextSecondary, modifier = Modifier.size(18.dp))
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, "Effacer", tint = TextSecondary, modifier = Modifier.size(16.dp))
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(14.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = AccentPurple.copy(alpha = 0.6f),
-            unfocusedBorderColor = BorderSubtle,
-            focusedContainerColor = GlassSurface,
-            unfocusedContainerColor = GlassSurface,
-            cursorColor = AccentPurple
-        )
-    )
-}
-
-@Composable
-fun FilterPill(
-    label: String,
-    selected: Boolean,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) color.copy(alpha = 0.15f) else Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) color.copy(alpha = 0.4f) else BorderSubtle
-        )
-    ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) color else TextSecondary,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        )
-    }
-}
-
-@Composable
-fun EmptySearchState(message: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("🔍", fontSize = 48.sp)
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(message, fontSize = 15.sp, color = TextSecondary)
     }
 }

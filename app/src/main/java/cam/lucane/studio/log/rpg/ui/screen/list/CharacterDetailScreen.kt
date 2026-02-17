@@ -1,19 +1,50 @@
-package cam.lucane.studio.log.rpg.ui.screen
+package cam.lucane.studio.log.rpg.ui.screen.list
 
 import android.app.Activity
+import android.app.Application
 import android.content.Intent
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Backpack
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabPosition
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,11 +55,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cam.lucane.studio.log.rpg.data.entity.getCurrencyDisplay
-import cam.lucane.studio.log.rpg.ui.screen.tabs.*
-import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.abilities.AbilitiesTab
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters.CountersTab
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.inventory.InventoryTab
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.NotesTab
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.sheet.SheetTab
+import cam.lucane.studio.log.rpg.ui.theme.AccentGold
+import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
+import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
+import cam.lucane.studio.log.rpg.ui.theme.AccentRed
+import cam.lucane.studio.log.rpg.ui.theme.BackgroundDark
+import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
+import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
+import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModelFactory
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +82,7 @@ fun CharacterDetailScreen(
     val context = LocalContext.current
     val viewModel: CharacterDetailViewModel = viewModel(
         factory = CharacterDetailViewModelFactory(
-            application = context.applicationContext as android.app.Application,
+            application = context.applicationContext as Application,
             characterId = characterId
         )
     )
@@ -84,7 +127,7 @@ fun CharacterDetailScreen(
             result.data?.data?.let { uri ->
                 try {
                     val inputStream = context.contentResolver.openInputStream(uri)
-                    val outputFile = java.io.File(context.filesDir, "character_${characterId}_sheet.pdf")
+                    val outputFile = File(context.filesDir, "character_${characterId}_sheet.pdf")
                     inputStream?.use { input ->
                         outputFile.outputStream().use { output ->
                             input.copyTo(output)
@@ -256,77 +299,6 @@ fun CharacterDetailScreen(
                 color = AccentPurple
             )
         }
-    }
-}
-
-// ── Onglet Fiche PDF ─────────────────────────────────────────────────────────
-
-@Composable
-fun SheetTab(
-    character: cam.lucane.studio.log.rpg.data.entity.Character,
-    viewModel: CharacterDetailViewModel,
-    pdfLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
-    onImportPdf: () -> Unit
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        val pdfFile = character.pdfPath?.let { java.io.File(it) }
-
-        if (pdfFile != null && pdfFile.exists()) {
-            PdfViewer(
-                pdfFile = pdfFile,
-                pdfLauncher = pdfLauncher
-            )
-        } else {
-            // État vide
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("📄", fontSize = 64.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "Aucune fiche PDF",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Importez votre fiche de personnage",
-                    fontSize = 14.sp,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = onImportPdf,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
-                ) {
-                    Icon(Icons.Default.Upload, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Importer un PDF")
-                }
-            }
-        }
-    }
-}
-
-// ── Onglet Compteurs ─────────────────────────────────────────────────────────
-
-// ── Onglet Notes (placeholder — sera remplacé par NotesComponents) ───────────
-
-@Composable
-fun NotesTab(
-    character: cam.lucane.studio.log.rpg.data.entity.Character,
-    viewModel: CharacterDetailViewModel
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Bientôt disponible…", color = TextSecondary)
     }
 }
 

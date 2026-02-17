@@ -1,7 +1,6 @@
-package cam.lucane.studio.log.rpg.ui.screen
+package cam.lucane.studio.log.rpg.ui.screen.list
 
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,8 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -26,11 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.ui.dialog.character.CreateCharacterDialog
+import cam.lucane.studio.log.rpg.ui.screen.list.components.CharacterCard
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterListViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +143,7 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
             }
         ) { padding ->
             if (characters.isEmpty()) {
-                EmptyState(
+                CharacterEmptyState(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
@@ -209,165 +207,8 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CharacterCard(
-    character: Character,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    // Couleur d'accent basée sur le nom (pour différencier les cartes)
-    val accentColor = remember(character.id) {
-        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
-        colors[(character.id % colors.size).toInt()]
-    }
-
-    Card(
-        onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Orbe d'ambiance dans la carte
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 30.dp, y = (-20).dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(accentColor.copy(alpha = 0.2f), Color.Transparent)
-                        )
-                    )
-            )
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Header : Avatar + nom + bouton supprimer
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(accentColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = character.name.firstOrNull()?.toString() ?: "?",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = accentColor
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = character.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Appuyer pour ouvrir",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            "Supprimer",
-                            tint = TextSecondary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Barres PV et Mana
-                HealthManaBar(
-                    label = "PV",
-                    current = character.currentHealth,
-                    max = character.maxHealth,
-                    color = HealthRed
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                HealthManaBar(
-                    label = "PM",
-                    current = character.currentMana,
-                    max = character.maxMana,
-                    color = ManaBlue
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HealthManaBar(
-    label: String,
-    current: Int,
-    max: Int,
-    color: Color
-) {
-    val progress = if (max > 0) (current.toFloat() / max).coerceIn(0f, 1f) else 0f
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            color = color,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.width(20.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(5.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color.White.copy(alpha = 0.07f))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(color, color.copy(alpha = 0.7f))
-                        )
-                    )
-            )
-        }
-
-        Text(
-            text = "$current/$max",
-            fontSize = 10.sp,
-            color = TextSecondary,
-            modifier = Modifier.width(40.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.End
-        )
-    }
-}
-
-@Composable
-private fun EmptyState(
+private fun CharacterEmptyState(
     modifier: Modifier = Modifier,
     onCreateClick: () -> Unit
 ) {
@@ -401,39 +242,4 @@ private fun EmptyState(
             Text("Créer un personnage")
         }
     }
-}
-
-@Composable
-private fun CreateCharacterDialog(
-    onDismiss: () -> Unit,
-    onCreated: (String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Nouveau personnage") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nom du personnage") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onCreated(name) },
-                enabled = name.isNotBlank()
-            ) {
-                Text("Créer")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Annuler")
-            }
-        }
-    )
 }
