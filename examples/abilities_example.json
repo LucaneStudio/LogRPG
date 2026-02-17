@@ -1,0 +1,22 @@
+{
+  "abilities": [
+    {
+      "name": "Boule de Feu",
+      "description": "Lance une boule de feu enflammée",
+      "cost": "10 mana",
+      "range": "30m",
+      "duration": "Instantané",
+      "category": "Magie offensive",
+      "notes": "Dégâts: 2d6 feu"
+    },
+    {
+      "name": "Soin Mineur",
+      "description": "Soigne les blessures légères",
+      "cost": "5 mana",
+      "range": "Toucher",
+      "duration": "Instantané",
+      "category": "Magie curative",
+      "notes": "Restaure 1d8+2 PV"
+    }
+  ]
+}

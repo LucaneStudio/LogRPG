@@ -1,0 +1,33 @@
+{
+  "name": "Gandalf le Gris",
+  "currentHealth": 85,
+  "maxHealth": 100,
+  "currentMana": 95,
+  "maxMana": 150,
+  "currencyMode": "BY_TEN",
+  "copperPieces": 7,
+  "silverPieces": 23,
+  "goldPieces": 12,
+  "abilities": [
+    {
+      "name": "Boule de Feu",
+      "description": "Lance une boule de feu",
+      "cost": "10 mana",
+      "range": "30m",
+      "duration": "Instantané",
+      "category": "Magie offensive",
+      "notes": "2d6 feu"
+    }
+  ],
+  "items": [
+    {
+      "name": "Bâton de Mage",
+      "description": "Un bâton ancien gravé de runes",
+      "quantity": 1,
+      "weight": "2kg",
+      "category": "Arme",
+      "isEquipped": true,
+      "notes": "+2 aux jets de magie"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "name": "Épée Longue +1",
+      "description": "Une épée finement forgée avec une lame enchantée",
+      "quantity": 1,
+      "weight": "1.5kg",
+      "category": "Arme",
+      "isEquipped": true,
+      "notes": "+1 aux jets d'attaque et de dégâts"
+    },
+    {
+      "name": "Potion de Soin",
+      "description": "Fiole remplie d'un liquide rouge",
+      "quantity": 3,
+      "weight": "0.2kg",
+      "category": "Consommable",
+      "isEquipped": false,
+      "notes": "Restaure 2d4+2 PV"
+    }
+  ]
+}
