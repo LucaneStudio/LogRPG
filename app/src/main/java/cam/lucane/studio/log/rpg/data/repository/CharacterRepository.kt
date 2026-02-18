@@ -9,6 +9,10 @@ import cam.lucane.studio.log.rpg.data.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import android.content.Context
+import android.net.Uri
+import kotlinx.coroutines.flow.firstOrNull
+import java.io.File
 
 class CharacterRepository(
     private val characterDao: CharacterDao,
@@ -16,43 +20,43 @@ class CharacterRepository(
     private val itemDao: ItemDao
 ) {
     private val gson = Gson()
-    
+
     // ========== CHARACTER CRUD ==========
     fun getAllCharacters(): Flow<List<Character>> = characterDao.getAllCharacters()
-    
+
     fun getCharacterById(id: Long): Flow<Character?> = characterDao.getCharacterById(id)
-    
+
     suspend fun createCharacter(name: String): Long {
         val character = Character(name = name)
         return characterDao.insertCharacter(character)
     }
-    
+
     suspend fun updateCharacter(character: Character) {
         val updated = character.copy(updatedAt = System.currentTimeMillis())
         characterDao.updateCharacter(updated)
     }
-    
+
     suspend fun deleteCharacter(character: Character) {
         characterDao.deleteCharacter(character)
     }
-    
+
     // ========== PDF MANAGEMENT ==========
     suspend fun updatePdf(characterId: Long, pdfPath: String?) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return
         updateCharacter(character.copy(pdfPath = pdfPath))
     }
-    
+
     // ========== HEALTH & MANA ==========
     suspend fun updateHealth(characterId: Long, current: Int, max: Int) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return
         updateCharacter(character.copy(currentHealth = current, maxHealth = max))
     }
-    
+
     suspend fun updateMana(characterId: Long, current: Int, max: Int) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return
         updateCharacter(character.copy(currentMana = current, maxMana = max))
     }
-    
+
     // ========== CURRENCY MANAGEMENT ==========
     suspend fun updateCurrencyMode(characterId: Long, mode: CurrencyMode) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return
@@ -73,35 +77,35 @@ class CharacterRepository(
         }
         return false
     }
-    
+
     // ========== ABILITIES ==========
-    fun getAbilities(characterId: Long): Flow<List<Ability>> = 
+    fun getAbilities(characterId: Long): Flow<List<Ability>> =
         abilityDao.getAbilitiesByCharacter(characterId)
-    
+
     suspend fun addAbility(characterId: Long, ability: Ability) {
         abilityDao.insertAbility(ability.copy(characterId = characterId))
     }
-    
+
     suspend fun updateAbility(ability: Ability) {
         abilityDao.updateAbility(ability)
     }
-    
+
     suspend fun deleteAbility(ability: Ability) {
         abilityDao.deleteAbility(ability)
     }
-    
+
     // ========== ITEMS ==========
-    fun getItems(characterId: Long): Flow<List<Item>> = 
+    fun getItems(characterId: Long): Flow<List<Item>> =
         itemDao.getItemsByCharacter(characterId)
-    
+
     suspend fun addItem(characterId: Long, item: Item) {
         itemDao.insertItem(item.copy(characterId = characterId))
     }
-    
+
     suspend fun updateItem(item: Item) {
         itemDao.updateItem(item)
     }
-    
+
     suspend fun deleteItem(item: Item) {
         itemDao.deleteItem(item)
     }
@@ -111,7 +115,7 @@ class CharacterRepository(
             characterDao.updateNotes(characterId, notes, System.currentTimeMillis())
         }
     }
-    
+
     // ========== IMPORT/EXPORT ==========
     suspend fun exportCharacter(characterId: Long): String {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return ""
@@ -163,13 +167,13 @@ class CharacterRepository(
             null
         }
     }
-    
+
     suspend fun exportAbilities(characterId: Long): String {
         val abilities = abilityDao.getAbilitiesByCharacterOnce(characterId)
         val export = AbilitiesImport(abilities = abilities.map { it.toExport() })
         return gson.toJson(export)
     }
-    
+
     suspend fun importAbilities(characterId: Long, json: String): Boolean {
         return try {
             val import = try {
@@ -178,7 +182,7 @@ class CharacterRepository(
                 val abilities = gson.fromJson(json, Array<AbilityExport>::class.java).toList()
                 AbilitiesImport(abilities)
             }
-            
+
             val abilities = import.abilities.map { it.toEntity(characterId) }
             abilityDao.insertAbilities(abilities)
             true
@@ -187,13 +191,13 @@ class CharacterRepository(
             false
         }
     }
-    
+
     suspend fun exportInventory(characterId: Long): String {
         val items = itemDao.getItemsByCharacterOnce(characterId)
         val export = InventoryImport(items = items.map { it.toExport() })
         return gson.toJson(export)
     }
-    
+
     suspend fun importInventory(characterId: Long, json: String): Boolean {
         return try {
             val import = gson.fromJson(json, InventoryImport::class.java)
@@ -203,6 +207,77 @@ class CharacterRepository(
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        }
+    }
+
+    // ✅ Profile Image Management
+    suspend fun updateProfileImage(characterId: Long, imageUri: Uri, context: Context): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Créer le dossier images s'il n'existe pas
+                val imagesDir = File(context.filesDir, "character_images")
+                if (!imagesDir.exists()) {
+                    imagesDir.mkdirs()
+                }
+
+                // Nom de fichier unique par personnage
+                val fileName = "profile_$characterId.jpg"
+                val destinationFile = File(imagesDir, fileName)
+
+                // Copier l'image depuis l'URI vers le stockage local
+                context.contentResolver.openInputStream(imageUri)?.use { input ->
+                    destinationFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                // Supprimer l'ancienne image si elle est différente
+                val character = characterDao.getCharacterById(characterId).firstOrNull()
+                character?.profileImagePath?.let { oldPath ->
+                    val oldFile = File(oldPath)
+                    if (oldFile != destinationFile && oldFile.exists()) {
+                        oldFile.delete()
+                    }
+                }
+
+                // Mettre à jour la base de données
+                characterDao.updateProfileImage(
+                    characterId,
+                    destinationFile.absolutePath,
+                    System.currentTimeMillis()
+                )
+
+                destinationFile.absolutePath
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    suspend fun removeProfileImage(characterId: Long) {
+        withContext(Dispatchers.IO) {
+            try {
+                // Récupérer le personnage pour avoir le chemin de l'image
+                val character = characterDao.getCharacterById(characterId).firstOrNull()
+
+                // Supprimer le fichier image
+                character?.profileImagePath?.let { path ->
+                    val file = File(path)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                }
+
+                // Mettre à jour la base de données
+                characterDao.updateProfileImage(
+                    characterId,
+                    null,
+                    System.currentTimeMillis()
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

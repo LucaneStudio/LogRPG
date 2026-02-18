@@ -16,7 +16,7 @@ import cam.lucane.studio.log.rpg.data.entity.Item
 
 @Database(
     entities = [Character::class, Ability::class, Item::class],
-    version = 4,  // ✅ 2 → 3
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -77,6 +77,13 @@ abstract class LogRPGDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE characters ADD COLUMN profileImagePath TEXT")
+            }
+        }
+
+
         fun getDatabase(context: Context): LogRPGDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -84,7 +91,7 @@ abstract class LogRPGDatabase : RoomDatabase() {
                     LogRPGDatabase::class.java,
                     "logrpg_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)  // ✅ Ajouter
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)  // ✅ Ajouter
                     .build()
                 INSTANCE = instance
                 instance

@@ -3,6 +3,7 @@ package cam.lucane.studio.log.rpg.ui.screen.list
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Backpack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
@@ -55,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cam.lucane.studio.log.rpg.ui.dialog.character.ProfileImagePicker
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.abilities.AbilitiesTab
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters.CountersTab
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.inventory.InventoryTab
@@ -89,6 +92,7 @@ fun CharacterDetailScreen(
     val character by viewModel.character.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
+    var showImagePicker by remember { mutableStateOf(false) }
 
     val tabs = listOf("FICHE", "COMPT.", "SORTS", "INV.", "NOTES")
     val tabIcons = listOf(
@@ -162,7 +166,7 @@ fun CharacterDetailScreen(
         character?.let { char ->
             Column(modifier = Modifier.fillMaxSize()) {
 
-                // ── Header ──────────────────────────────────────────────────
+                // ── Header ────────────────────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -214,6 +218,17 @@ fun CharacterDetailScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            // ✅ NOUVEAU : Changer la photo
+                            DropdownMenuItem(
+                                text = { Text("Changer la photo") },
+                                leadingIcon = { Icon(Icons.Default.CameraAlt, null) },
+                                onClick = {
+                                    showMenu = false
+                                    showImagePicker = true
+                                }
+                            )
+
+                            // Exporter en JSON
                             DropdownMenuItem(
                                 text = { Text("Exporter en JSON") },
                                 leadingIcon = { Icon(Icons.Default.Upload, null) },
@@ -231,7 +246,7 @@ fun CharacterDetailScreen(
                     }
                 }
 
-                // ── Tabs ─────────────────────────────────────────────────────
+                // ── Tabs ──────────────────────────────────────────────────
                 TabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = Color.Transparent,
@@ -270,7 +285,7 @@ fun CharacterDetailScreen(
 
                 HorizontalDivider(color = BorderSubtle)
 
-                // ── Contenu de l'onglet ──────────────────────────────────────
+                // ── Contenu de l'onglet ──────────────────────────────────
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (selectedTab) {
                         0 -> SheetTab(
@@ -297,6 +312,24 @@ fun CharacterDetailScreen(
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = AccentPurple
+            )
+        }
+    }
+
+    // ✅ Dialog sélection image
+    if (showImagePicker) {
+        character?.let { char ->
+            ProfileImagePicker(
+                currentImageUri = char.profileImagePath?.let { Uri.fromFile(File(it)) },
+                onDismiss = { showImagePicker = false },
+                onImageSelected = { uri ->
+                    if (uri != null) {
+                        viewModel.updateProfileImage(uri)
+                    } else {
+                        viewModel.removeProfileImage()
+                    }
+                    showImagePicker = false
+                }
             )
         }
     }

@@ -42,16 +42,16 @@ public final class LogRPGDatabase_Impl extends LogRPGDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(5) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `characters` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `pdfPath` TEXT, `currentHealth` INTEGER NOT NULL, `maxHealth` INTEGER NOT NULL, `currentMana` INTEGER NOT NULL, `maxMana` INTEGER NOT NULL, `notes` TEXT, `currencyMode` TEXT NOT NULL, `credits` INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `characters` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `pdfPath` TEXT, `currentHealth` INTEGER NOT NULL, `maxHealth` INTEGER NOT NULL, `currentMana` INTEGER NOT NULL, `maxMana` INTEGER NOT NULL, `notes` TEXT, `profileImagePath` TEXT, `currencyMode` TEXT NOT NULL, `credits` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `abilities` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `characterId` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `cost` TEXT, `range` TEXT, `duration` TEXT, `category` TEXT, `notes` TEXT, FOREIGN KEY(`characterId`) REFERENCES `characters`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_abilities_characterId` ON `abilities` (`characterId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `characterId` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `quantity` INTEGER NOT NULL, `weight` TEXT, `category` TEXT, `isEquipped` INTEGER NOT NULL, `isConsumable` INTEGER NOT NULL, `notes` TEXT, FOREIGN KEY(`characterId`) REFERENCES `characters`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_items_characterId` ON `items` (`characterId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6d393b05d59670dca1ba64ddc3571b2')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8530cc1aab09ed0e07c4a24a00774ade')");
       }
 
       @Override
@@ -103,7 +103,7 @@ public final class LogRPGDatabase_Impl extends LogRPGDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsCharacters = new HashMap<String, TableInfo.Column>(12);
+        final HashMap<String, TableInfo.Column> _columnsCharacters = new HashMap<String, TableInfo.Column>(13);
         _columnsCharacters.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -114,6 +114,7 @@ public final class LogRPGDatabase_Impl extends LogRPGDatabase {
         _columnsCharacters.put("currentMana", new TableInfo.Column("currentMana", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("maxMana", new TableInfo.Column("maxMana", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("notes", new TableInfo.Column("notes", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsCharacters.put("profileImagePath", new TableInfo.Column("profileImagePath", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("currencyMode", new TableInfo.Column("currencyMode", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsCharacters.put("credits", new TableInfo.Column("credits", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysCharacters = new HashSet<TableInfo.ForeignKey>(0);
@@ -170,7 +171,7 @@ public final class LogRPGDatabase_Impl extends LogRPGDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "d6d393b05d59670dca1ba64ddc3571b2", "607a611e29cef2c3c4018a75b9e8e90d");
+    }, "8530cc1aab09ed0e07c4a24a00774ade", "d03290f7e4d1e1a326687e2b365d6e39");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

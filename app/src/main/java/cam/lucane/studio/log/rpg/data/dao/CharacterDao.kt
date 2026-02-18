@@ -29,4 +29,7 @@ interface CharacterDao {
 
     @Query("UPDATE characters SET notes = :notes, updatedAt = :updatedAt WHERE id = :characterId")
     suspend fun updateNotes(characterId: Long, notes: String, updatedAt: Long)
+
+    @Query("UPDATE characters SET profileImagePath = :imagePath, updatedAt = :updatedAt WHERE id = :characterId")
+    suspend fun updateProfileImage(characterId: Long, imagePath: String?, updatedAt: Long)
 }

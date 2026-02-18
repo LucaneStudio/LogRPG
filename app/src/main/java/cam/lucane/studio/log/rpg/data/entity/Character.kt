@@ -20,11 +20,9 @@ data class Character(
     val currentMana: Int = 0,
     val maxMana: Int = 100,
     val notes: String? = null,
-
+    val profileImagePath: String? = null,
     // Currency settings
     val currencyMode: CurrencyMode = CurrencyMode.SINGLE,
-
-    // ✅ NOUVELLE STRUCTURE : Un seul champ crédits
     val credits: Int = 0
 )
 

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.ui.components.common.ProfileImage
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
@@ -86,21 +87,13 @@ fun CharacterCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(accentColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = character.name.firstOrNull()?.toString() ?: "?",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = accentColor
-                        )
-                    }
+                    // ✅ NOUVEAU CODE
+                    ProfileImage(
+                        characterName = character.name,
+                        imagePath = character.profileImagePath,
+                        size = 56.dp,
+                        color = accentColor
+                    )
 
                     Spacer(modifier = Modifier.width(12.dp))
 
