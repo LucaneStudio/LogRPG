@@ -9,6 +9,7 @@ data class CharacterExport(
     val maxMana: Int,
     val currencyMode: String,
     val credits: Int,
+    val notes: String? = null,
     val abilities: List<AbilityExport>,
     val items: List<ItemExport>
 )
@@ -32,7 +33,7 @@ data class ItemExport(
     val weight: String? = null,
     val category: String? = null,
     val isEquipped: Boolean = false,
-    val isConsumable: Boolean = false,  // ✅ NOUVEAU
+    val isConsumable: Boolean = false,
     val notes: String? = null
 )
 

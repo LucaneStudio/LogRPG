@@ -156,4 +156,10 @@ class CharacterDetailViewModel(
             onResult(json)
         }
     }
+
+    fun updateNotes(notes: String) {
+        viewModelScope.launch {
+            repository.updateNotes(characterId, notes)
+        }
+    }
 }

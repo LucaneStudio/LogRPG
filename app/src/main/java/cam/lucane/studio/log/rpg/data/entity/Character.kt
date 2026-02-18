@@ -19,6 +19,7 @@ data class Character(
     val maxHealth: Int = 100,
     val currentMana: Int = 0,
     val maxMana: Int = 100,
+    val notes: String? = null,
 
     // Currency settings
     val currencyMode: CurrencyMode = CurrencyMode.SINGLE,

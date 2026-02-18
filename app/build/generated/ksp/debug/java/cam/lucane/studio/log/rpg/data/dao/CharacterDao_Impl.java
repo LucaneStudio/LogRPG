@@ -47,13 +47,15 @@ public final class CharacterDao_Impl implements CharacterDao {
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteCharacterById;
 
+  private final SharedSQLiteStatement __preparedStmtOfUpdateNotes;
+
   public CharacterDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfCharacter = new EntityInsertionAdapter<Character>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR ABORT INTO `characters` (`id`,`name`,`createdAt`,`updatedAt`,`pdfPath`,`currentHealth`,`maxHealth`,`currentMana`,`maxMana`,`currencyMode`,`credits`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR ABORT INTO `characters` (`id`,`name`,`createdAt`,`updatedAt`,`pdfPath`,`currentHealth`,`maxHealth`,`currentMana`,`maxMana`,`notes`,`currencyMode`,`credits`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -72,9 +74,14 @@ public final class CharacterDao_Impl implements CharacterDao {
         statement.bindLong(7, entity.getMaxHealth());
         statement.bindLong(8, entity.getCurrentMana());
         statement.bindLong(9, entity.getMaxMana());
+        if (entity.getNotes() == null) {
+          statement.bindNull(10);
+        } else {
+          statement.bindString(10, entity.getNotes());
+        }
         final String _tmp = __converters.fromCurrencyMode(entity.getCurrencyMode());
-        statement.bindString(10, _tmp);
-        statement.bindLong(11, entity.getCredits());
+        statement.bindString(11, _tmp);
+        statement.bindLong(12, entity.getCredits());
       }
     };
     this.__deletionAdapterOfCharacter = new EntityDeletionOrUpdateAdapter<Character>(__db) {
@@ -94,7 +101,7 @@ public final class CharacterDao_Impl implements CharacterDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `characters` SET `id` = ?,`name` = ?,`createdAt` = ?,`updatedAt` = ?,`pdfPath` = ?,`currentHealth` = ?,`maxHealth` = ?,`currentMana` = ?,`maxMana` = ?,`currencyMode` = ?,`credits` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `characters` SET `id` = ?,`name` = ?,`createdAt` = ?,`updatedAt` = ?,`pdfPath` = ?,`currentHealth` = ?,`maxHealth` = ?,`currentMana` = ?,`maxMana` = ?,`notes` = ?,`currencyMode` = ?,`credits` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -113,10 +120,15 @@ public final class CharacterDao_Impl implements CharacterDao {
         statement.bindLong(7, entity.getMaxHealth());
         statement.bindLong(8, entity.getCurrentMana());
         statement.bindLong(9, entity.getMaxMana());
+        if (entity.getNotes() == null) {
+          statement.bindNull(10);
+        } else {
+          statement.bindString(10, entity.getNotes());
+        }
         final String _tmp = __converters.fromCurrencyMode(entity.getCurrencyMode());
-        statement.bindString(10, _tmp);
-        statement.bindLong(11, entity.getCredits());
-        statement.bindLong(12, entity.getId());
+        statement.bindString(11, _tmp);
+        statement.bindLong(12, entity.getCredits());
+        statement.bindLong(13, entity.getId());
       }
     };
     this.__preparedStmtOfDeleteCharacterById = new SharedSQLiteStatement(__db) {
@@ -124,6 +136,14 @@ public final class CharacterDao_Impl implements CharacterDao {
       @NonNull
       public String createQuery() {
         final String _query = "DELETE FROM characters WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUpdateNotes = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE characters SET notes = ?, updatedAt = ? WHERE id = ?";
         return _query;
       }
     };
@@ -213,6 +233,36 @@ public final class CharacterDao_Impl implements CharacterDao {
   }
 
   @Override
+  public Object updateNotes(final long characterId, final String notes, final long updatedAt,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateNotes.acquire();
+        int _argIndex = 1;
+        _stmt.bindString(_argIndex, notes);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, updatedAt);
+        _argIndex = 3;
+        _stmt.bindLong(_argIndex, characterId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateNotes.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Flow<List<Character>> getAllCharacters() {
     final String _sql = "SELECT * FROM characters ORDER BY updatedAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -231,6 +281,7 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
           final int _cursorIndexOfCredits = CursorUtil.getColumnIndexOrThrow(_cursor, "credits");
           final List<Character> _result = new ArrayList<Character>(_cursor.getCount());
@@ -258,13 +309,19 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final String _tmpNotes;
+            if (_cursor.isNull(_cursorIndexOfNotes)) {
+              _tmpNotes = null;
+            } else {
+              _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            }
             final CurrencyMode _tmpCurrencyMode;
             final String _tmp;
             _tmp = _cursor.getString(_cursorIndexOfCurrencyMode);
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _item = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpCurrencyMode,_tmpCredits);
+            _item = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpCurrencyMode,_tmpCredits);
             _result.add(_item);
           }
           return _result;
@@ -301,6 +358,7 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
           final int _cursorIndexOfCredits = CursorUtil.getColumnIndexOrThrow(_cursor, "credits");
           final Character _result;
@@ -327,13 +385,19 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final String _tmpNotes;
+            if (_cursor.isNull(_cursorIndexOfNotes)) {
+              _tmpNotes = null;
+            } else {
+              _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            }
             final CurrencyMode _tmpCurrencyMode;
             final String _tmp;
             _tmp = _cursor.getString(_cursorIndexOfCurrencyMode);
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpCurrencyMode,_tmpCredits);
+            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpCurrencyMode,_tmpCredits);
           } else {
             _result = null;
           }
@@ -373,6 +437,7 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
           final int _cursorIndexOfCredits = CursorUtil.getColumnIndexOrThrow(_cursor, "credits");
           final Character _result;
@@ -399,13 +464,19 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final String _tmpNotes;
+            if (_cursor.isNull(_cursorIndexOfNotes)) {
+              _tmpNotes = null;
+            } else {
+              _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            }
             final CurrencyMode _tmpCurrencyMode;
             final String _tmp;
             _tmp = _cursor.getString(_cursorIndexOfCurrencyMode);
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpCurrencyMode,_tmpCredits);
+            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpCurrencyMode,_tmpCredits);
           } else {
             _result = null;
           }

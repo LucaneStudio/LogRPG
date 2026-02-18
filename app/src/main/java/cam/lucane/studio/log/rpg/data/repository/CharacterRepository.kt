@@ -6,7 +6,9 @@ import cam.lucane.studio.log.rpg.data.dao.CharacterDao
 import cam.lucane.studio.log.rpg.data.dao.ItemDao
 import cam.lucane.studio.log.rpg.data.entity.*
 import cam.lucane.studio.log.rpg.data.model.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 class CharacterRepository(
     private val characterDao: CharacterDao,
@@ -103,13 +105,19 @@ class CharacterRepository(
     suspend fun deleteItem(item: Item) {
         itemDao.deleteItem(item)
     }
+
+    suspend fun updateNotes(characterId: Long, notes: String) {
+        withContext(Dispatchers.IO) {
+            characterDao.updateNotes(characterId, notes, System.currentTimeMillis())
+        }
+    }
     
     // ========== IMPORT/EXPORT ==========
     suspend fun exportCharacter(characterId: Long): String {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return ""
         val abilities = abilityDao.getAbilitiesByCharacterOnce(characterId)
         val items = itemDao.getItemsByCharacterOnce(characterId)
-        
+
         val export = CharacterExport(
             name = character.name,
             currentHealth = character.currentHealth,
@@ -117,11 +125,12 @@ class CharacterRepository(
             currentMana = character.currentMana,
             maxMana = character.maxMana,
             currencyMode = character.currencyMode.name,
+            notes = character.notes,
             credits = character.credits,
             abilities = abilities.map { it.toExport() },
             items = items.map { it.toExport() }
         )
-        
+
         return gson.toJson(export)
     }
 
@@ -136,7 +145,8 @@ class CharacterRepository(
                 currentMana = export.currentMana,
                 maxMana = export.maxMana,
                 currencyMode = CurrencyMode.valueOf(export.currencyMode),
-                credits = export.credits
+                credits = export.credits,
+                notes = export.notes
             ) ?: return null
 
             updateCharacter(character)

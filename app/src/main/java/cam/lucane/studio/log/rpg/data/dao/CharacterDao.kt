@@ -26,4 +26,7 @@ interface CharacterDao {
     
     @Query("DELETE FROM characters WHERE id = :characterId")
     suspend fun deleteCharacterById(characterId: Long)
+
+    @Query("UPDATE characters SET notes = :notes, updatedAt = :updatedAt WHERE id = :characterId")
+    suspend fun updateNotes(characterId: Long, notes: String, updatedAt: Long)
 }
