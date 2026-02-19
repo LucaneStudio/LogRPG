@@ -67,28 +67,6 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
             .fillMaxSize()
             .background(BackgroundDark)
     ) {
-        // ── Orbes d'ambiance ──────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .size(300.dp)
-                .offset(x = 150.dp, y = (-80).dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(AccentPurple.copy(alpha = 0.15f), Color.Transparent)
-                    )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .offset(x = (-60).dp, y = 500.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(AccentGreen.copy(alpha = 0.10f), Color.Transparent)
-                    )
-                )
-        )
-
         // ── Contenu principal ────────────────────────────────────────────
         Scaffold(
             modifier = Modifier.haze(hazeState),

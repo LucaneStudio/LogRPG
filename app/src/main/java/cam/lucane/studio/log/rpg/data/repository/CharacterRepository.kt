@@ -57,6 +57,16 @@ class CharacterRepository(
         updateCharacter(character.copy(currentMana = current, maxMana = max))
     }
 
+    suspend fun updateManaMode(characterId: Long, mode: ManaMode) {
+        characterDao.updateManaMode(characterId, mode, System.currentTimeMillis())
+    }
+
+    // ========== SPELL SLOTS ==========
+
+    suspend fun updateSpellSlots(characterId: Long, slots: List<SpellSlot>) {
+        characterDao.updateSpellSlots(characterId, slots.toJson(), System.currentTimeMillis())
+    }
+
     // ========== CURRENCY MANAGEMENT ==========
     suspend fun updateCurrencyMode(characterId: Long, mode: CurrencyMode) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return

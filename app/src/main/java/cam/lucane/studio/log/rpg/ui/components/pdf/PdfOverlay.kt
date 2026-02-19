@@ -42,91 +42,72 @@ fun PdfOverlay(
     onNext: () -> Unit,
     canGoPrevious: Boolean,
     canGoNext: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mainColor: Color
 ) {
     val hazeState = remember { HazeState() }
 
-    Surface(
-        modifier = modifier.haze(hazeState).fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = BackgroundDark.copy(alpha = 0.85f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle.copy(alpha = 0.2f)),
-        shadowElevation = 8.dp
+    Box(
+        modifier = modifier.fillMaxWidth(),
     ) {
-        // Effet glassmorphic en arrière-plan
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.03f),
-                            Color.Transparent
-                        )
-                    )
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+            OutlinedButton(
+                onClick = onPrevious,
+                enabled = canGoPrevious,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = BackgroundDark.copy(alpha = 0.85f),
+                    disabledContainerColor = BackgroundDark.copy(alpha = 0.85f),
+                    contentColor = if (canGoPrevious) mainColor else mainColor.copy(alpha = 0.3f)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    BorderSubtle
+                ),
+                modifier = Modifier.weight(1f)
             ) {
-                // Ligne navigation de page
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedButton(
-                        onClick = onPrevious,
-                        enabled = canGoPrevious,
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = if (canGoPrevious) TextPrimary else TextSecondary.copy(alpha = 0.3f)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (canGoPrevious) BorderSubtle else BorderSubtle.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            "Précédent",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Précédent", fontSize = 11.sp)
-                    }
+                Icon(
+                    Icons.Default.ArrowBack,
+                    "Précédent",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Précédent", fontSize = 11.sp)
+            }
 
-                    Text(
-                        text = "Page $currentPage / $totalPages",
-                        fontSize = 11.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
+            Text(
+                text = "Page $currentPage / $totalPages",
+                fontSize = 11.sp,
+                color = TextSecondary,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
 
-                    OutlinedButton(
-                        onClick = onNext,
-                        enabled = canGoNext,
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = if (canGoNext) TextPrimary else TextSecondary.copy(alpha = 0.3f)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (canGoNext) BorderSubtle else BorderSubtle.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Suivant", fontSize = 11.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            Icons.Default.ArrowForward,
-                            "Suivant",
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
+            OutlinedButton(
+                onClick = onNext,
+                enabled = canGoNext,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = BackgroundDark.copy(alpha = 0.85f),
+                    disabledContainerColor = BackgroundDark.copy(alpha = 0.85f),
+                    contentColor = if (canGoNext) mainColor else mainColor.copy(alpha = 0.3f)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    BorderSubtle
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Suivant", fontSize = 11.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    Icons.Default.ArrowForward,
+                    "Suivant",
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

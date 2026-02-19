@@ -60,6 +60,19 @@ class CharacterDetailViewModel(
         }
     }
 
+    fun updateManaMode(mode: ManaMode) {
+        viewModelScope.launch {
+            repository.updateManaMode(characterId, mode)
+        }
+    }
+
+    //Spell Slots
+    fun updateSpellSlots(slots: List<SpellSlot>) {
+        viewModelScope.launch {
+            repository.updateSpellSlots(characterId, slots)
+        }
+    }
+
     // Currency
     fun updateCurrencyMode(mode: CurrencyMode) {
         viewModelScope.launch {

@@ -16,8 +16,10 @@ import androidx.sqlite.db.SupportSQLiteStatement;
 import cam.lucane.studio.log.rpg.data.Converters;
 import cam.lucane.studio.log.rpg.data.entity.Character;
 import cam.lucane.studio.log.rpg.data.entity.CurrencyMode;
+import cam.lucane.studio.log.rpg.data.entity.ManaMode;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.IllegalArgumentException;
 import java.lang.Long;
 import java.lang.Object;
 import java.lang.Override;
@@ -51,13 +53,17 @@ public final class CharacterDao_Impl implements CharacterDao {
 
   private final SharedSQLiteStatement __preparedStmtOfUpdateProfileImage;
 
+  private final SharedSQLiteStatement __preparedStmtOfUpdateManaMode;
+
+  private final SharedSQLiteStatement __preparedStmtOfUpdateSpellSlots;
+
   public CharacterDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfCharacter = new EntityInsertionAdapter<Character>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR ABORT INTO `characters` (`id`,`name`,`createdAt`,`updatedAt`,`pdfPath`,`currentHealth`,`maxHealth`,`currentMana`,`maxMana`,`notes`,`profileImagePath`,`currencyMode`,`credits`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR ABORT INTO `characters` (`id`,`name`,`createdAt`,`updatedAt`,`pdfPath`,`currentHealth`,`maxHealth`,`currentMana`,`maxMana`,`manaMode`,`spellSlotsJson`,`notes`,`profileImagePath`,`currencyMode`,`credits`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -76,19 +82,21 @@ public final class CharacterDao_Impl implements CharacterDao {
         statement.bindLong(7, entity.getMaxHealth());
         statement.bindLong(8, entity.getCurrentMana());
         statement.bindLong(9, entity.getMaxMana());
+        statement.bindString(10, __ManaMode_enumToString(entity.getManaMode()));
+        statement.bindString(11, entity.getSpellSlotsJson());
         if (entity.getNotes() == null) {
-          statement.bindNull(10);
+          statement.bindNull(12);
         } else {
-          statement.bindString(10, entity.getNotes());
+          statement.bindString(12, entity.getNotes());
         }
         if (entity.getProfileImagePath() == null) {
-          statement.bindNull(11);
+          statement.bindNull(13);
         } else {
-          statement.bindString(11, entity.getProfileImagePath());
+          statement.bindString(13, entity.getProfileImagePath());
         }
         final String _tmp = __converters.fromCurrencyMode(entity.getCurrencyMode());
-        statement.bindString(12, _tmp);
-        statement.bindLong(13, entity.getCredits());
+        statement.bindString(14, _tmp);
+        statement.bindLong(15, entity.getCredits());
       }
     };
     this.__deletionAdapterOfCharacter = new EntityDeletionOrUpdateAdapter<Character>(__db) {
@@ -108,7 +116,7 @@ public final class CharacterDao_Impl implements CharacterDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `characters` SET `id` = ?,`name` = ?,`createdAt` = ?,`updatedAt` = ?,`pdfPath` = ?,`currentHealth` = ?,`maxHealth` = ?,`currentMana` = ?,`maxMana` = ?,`notes` = ?,`profileImagePath` = ?,`currencyMode` = ?,`credits` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `characters` SET `id` = ?,`name` = ?,`createdAt` = ?,`updatedAt` = ?,`pdfPath` = ?,`currentHealth` = ?,`maxHealth` = ?,`currentMana` = ?,`maxMana` = ?,`manaMode` = ?,`spellSlotsJson` = ?,`notes` = ?,`profileImagePath` = ?,`currencyMode` = ?,`credits` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -127,20 +135,22 @@ public final class CharacterDao_Impl implements CharacterDao {
         statement.bindLong(7, entity.getMaxHealth());
         statement.bindLong(8, entity.getCurrentMana());
         statement.bindLong(9, entity.getMaxMana());
+        statement.bindString(10, __ManaMode_enumToString(entity.getManaMode()));
+        statement.bindString(11, entity.getSpellSlotsJson());
         if (entity.getNotes() == null) {
-          statement.bindNull(10);
+          statement.bindNull(12);
         } else {
-          statement.bindString(10, entity.getNotes());
+          statement.bindString(12, entity.getNotes());
         }
         if (entity.getProfileImagePath() == null) {
-          statement.bindNull(11);
+          statement.bindNull(13);
         } else {
-          statement.bindString(11, entity.getProfileImagePath());
+          statement.bindString(13, entity.getProfileImagePath());
         }
         final String _tmp = __converters.fromCurrencyMode(entity.getCurrencyMode());
-        statement.bindString(12, _tmp);
-        statement.bindLong(13, entity.getCredits());
-        statement.bindLong(14, entity.getId());
+        statement.bindString(14, _tmp);
+        statement.bindLong(15, entity.getCredits());
+        statement.bindLong(16, entity.getId());
       }
     };
     this.__preparedStmtOfDeleteCharacterById = new SharedSQLiteStatement(__db) {
@@ -164,6 +174,22 @@ public final class CharacterDao_Impl implements CharacterDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE characters SET profileImagePath = ?, updatedAt = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUpdateManaMode = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE characters SET manaMode = ?, updatedAt = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUpdateSpellSlots = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE characters SET spellSlotsJson = ?, updatedAt = ? WHERE id = ?";
         return _query;
       }
     };
@@ -317,6 +343,66 @@ public final class CharacterDao_Impl implements CharacterDao {
   }
 
   @Override
+  public Object updateManaMode(final long characterId, final ManaMode mode, final long updatedAt,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateManaMode.acquire();
+        int _argIndex = 1;
+        _stmt.bindString(_argIndex, __ManaMode_enumToString(mode));
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, updatedAt);
+        _argIndex = 3;
+        _stmt.bindLong(_argIndex, characterId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateManaMode.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object updateSpellSlots(final long characterId, final String json, final long updatedAt,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateSpellSlots.acquire();
+        int _argIndex = 1;
+        _stmt.bindString(_argIndex, json);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, updatedAt);
+        _argIndex = 3;
+        _stmt.bindLong(_argIndex, characterId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateSpellSlots.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Flow<List<Character>> getAllCharacters() {
     final String _sql = "SELECT * FROM characters ORDER BY updatedAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -335,6 +421,8 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfManaMode = CursorUtil.getColumnIndexOrThrow(_cursor, "manaMode");
+          final int _cursorIndexOfSpellSlotsJson = CursorUtil.getColumnIndexOrThrow(_cursor, "spellSlotsJson");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfProfileImagePath = CursorUtil.getColumnIndexOrThrow(_cursor, "profileImagePath");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
@@ -364,6 +452,10 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final ManaMode _tmpManaMode;
+            _tmpManaMode = __ManaMode_stringToEnum(_cursor.getString(_cursorIndexOfManaMode));
+            final String _tmpSpellSlotsJson;
+            _tmpSpellSlotsJson = _cursor.getString(_cursorIndexOfSpellSlotsJson);
             final String _tmpNotes;
             if (_cursor.isNull(_cursorIndexOfNotes)) {
               _tmpNotes = null;
@@ -382,7 +474,7 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _item = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
+            _item = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpManaMode,_tmpSpellSlotsJson,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
             _result.add(_item);
           }
           return _result;
@@ -419,6 +511,8 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfManaMode = CursorUtil.getColumnIndexOrThrow(_cursor, "manaMode");
+          final int _cursorIndexOfSpellSlotsJson = CursorUtil.getColumnIndexOrThrow(_cursor, "spellSlotsJson");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfProfileImagePath = CursorUtil.getColumnIndexOrThrow(_cursor, "profileImagePath");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
@@ -447,6 +541,10 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final ManaMode _tmpManaMode;
+            _tmpManaMode = __ManaMode_stringToEnum(_cursor.getString(_cursorIndexOfManaMode));
+            final String _tmpSpellSlotsJson;
+            _tmpSpellSlotsJson = _cursor.getString(_cursorIndexOfSpellSlotsJson);
             final String _tmpNotes;
             if (_cursor.isNull(_cursorIndexOfNotes)) {
               _tmpNotes = null;
@@ -465,7 +563,7 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
+            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpManaMode,_tmpSpellSlotsJson,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
           } else {
             _result = null;
           }
@@ -505,6 +603,8 @@ public final class CharacterDao_Impl implements CharacterDao {
           final int _cursorIndexOfMaxHealth = CursorUtil.getColumnIndexOrThrow(_cursor, "maxHealth");
           final int _cursorIndexOfCurrentMana = CursorUtil.getColumnIndexOrThrow(_cursor, "currentMana");
           final int _cursorIndexOfMaxMana = CursorUtil.getColumnIndexOrThrow(_cursor, "maxMana");
+          final int _cursorIndexOfManaMode = CursorUtil.getColumnIndexOrThrow(_cursor, "manaMode");
+          final int _cursorIndexOfSpellSlotsJson = CursorUtil.getColumnIndexOrThrow(_cursor, "spellSlotsJson");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfProfileImagePath = CursorUtil.getColumnIndexOrThrow(_cursor, "profileImagePath");
           final int _cursorIndexOfCurrencyMode = CursorUtil.getColumnIndexOrThrow(_cursor, "currencyMode");
@@ -533,6 +633,10 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrentMana = _cursor.getInt(_cursorIndexOfCurrentMana);
             final int _tmpMaxMana;
             _tmpMaxMana = _cursor.getInt(_cursorIndexOfMaxMana);
+            final ManaMode _tmpManaMode;
+            _tmpManaMode = __ManaMode_stringToEnum(_cursor.getString(_cursorIndexOfManaMode));
+            final String _tmpSpellSlotsJson;
+            _tmpSpellSlotsJson = _cursor.getString(_cursorIndexOfSpellSlotsJson);
             final String _tmpNotes;
             if (_cursor.isNull(_cursorIndexOfNotes)) {
               _tmpNotes = null;
@@ -551,7 +655,7 @@ public final class CharacterDao_Impl implements CharacterDao {
             _tmpCurrencyMode = __converters.toCurrencyMode(_tmp);
             final int _tmpCredits;
             _tmpCredits = _cursor.getInt(_cursorIndexOfCredits);
-            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
+            _result = new Character(_tmpId,_tmpName,_tmpCreatedAt,_tmpUpdatedAt,_tmpPdfPath,_tmpCurrentHealth,_tmpMaxHealth,_tmpCurrentMana,_tmpMaxMana,_tmpManaMode,_tmpSpellSlotsJson,_tmpNotes,_tmpProfileImagePath,_tmpCurrencyMode,_tmpCredits);
           } else {
             _result = null;
           }
@@ -567,5 +671,21 @@ public final class CharacterDao_Impl implements CharacterDao {
   @NonNull
   public static List<Class<?>> getRequiredConverters() {
     return Collections.emptyList();
+  }
+
+  private String __ManaMode_enumToString(@NonNull final ManaMode _value) {
+    switch (_value) {
+      case MANA: return "MANA";
+      case SPELL_SLOTS: return "SPELL_SLOTS";
+      default: throw new IllegalArgumentException("Can't convert enum to string, unknown enum value: " + _value);
+    }
+  }
+
+  private ManaMode __ManaMode_stringToEnum(@NonNull final String _value) {
+    switch (_value) {
+      case "MANA": return ManaMode.MANA;
+      case "SPELL_SLOTS": return ManaMode.SPELL_SLOTS;
+      default: throw new IllegalArgumentException("Can't convert value to enum, unknown value: " + _value);
+    }
   }
 }

@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -47,6 +48,7 @@ import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 @Composable
 fun PdfPageImage(
     bitmap: Bitmap,
+    mainColor: Color,
     pageNumber: Int,
     pdfLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>
 ) {
@@ -128,7 +130,7 @@ fun PdfPageImage(
                         text = "$pageNumber",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         fontSize = 11.sp,
-                        color = AccentPurple,
+                        color = mainColor,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -172,12 +174,12 @@ fun PdfPageImage(
                         Icons.Default.Edit,
                         "Modifier",
                         modifier = Modifier.size(14.dp),
-                        tint = AccentPurple
+                        tint = mainColor
                     )
                     Text(
                         text = "Modifier",
                         fontSize = 11.sp,
-                        color = AccentPurple,
+                        color = mainColor,
                         fontWeight = FontWeight.Medium
                     )
                 }

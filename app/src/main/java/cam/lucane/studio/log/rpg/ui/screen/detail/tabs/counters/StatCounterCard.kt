@@ -37,7 +37,8 @@ fun StatCounterCard(
     onMinus: () -> Unit,
     onPlus: () -> Unit,
     onReset: () -> Unit,
-    onEditMax: () -> Unit
+    onEditMax: () -> Unit,
+    onEditMode: (() -> Unit)? = null
 ) {
     val progress = if (max > 0) (current.toFloat() / max).coerceIn(0f, 1f) else 0f
     val isAtMax = current == max
@@ -76,6 +77,11 @@ fun StatCounterCard(
                         // Edit max
                         SmallIconBtn(onClick = onEditMax) {
                             Icon(Icons.Default.Edit, "Modifier max", modifier = Modifier.size(16.dp))
+                        }
+                        onEditMode?.let { action ->
+                            SmallIconBtn(onClick = action) {
+                                Icon(Icons.Default.Settings, "Changer de mode", modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }

@@ -41,7 +41,8 @@ fun SheetTab(
         if (pdfFile != null && pdfFile.exists()) {
             PdfViewer(
                 pdfFile = pdfFile,
-                pdfLauncher = pdfLauncher
+                pdfLauncher = pdfLauncher,
+                characterId = character.id
             )
         } else {
             // État vide

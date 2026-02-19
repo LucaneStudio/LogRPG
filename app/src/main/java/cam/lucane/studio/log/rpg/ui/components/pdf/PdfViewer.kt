@@ -28,7 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.theme.AccentGold
+import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
+import cam.lucane.studio.log.rpg.ui.theme.AccentRed
 import cam.lucane.studio.log.rpg.ui.theme.HealthRed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,6 +41,7 @@ import kotlin.use
 @Composable
 fun PdfViewer(
     pdfFile: File,
+    characterId: Long,
     pdfLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>
 ) {
     var pageCount by remember { mutableStateOf(0) }
@@ -45,6 +49,12 @@ fun PdfViewer(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var currentPageIndex by remember { mutableStateOf(0) }
+
+    val mainColor = remember(characterId) {
+        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
+        colors[(characterId % colors.size).toInt()]
+    }
+
 
     // Charger le PDF
     LaunchedEffect(pdfFile) {
@@ -97,7 +107,8 @@ fun PdfViewer(
                     PdfPageImage(
                         bitmap = bitmaps[currentPageIndex],
                         pageNumber = currentPageIndex + 1,
-                        pdfLauncher = pdfLauncher
+                        pdfLauncher = pdfLauncher,
+                        mainColor = mainColor
                     )
                 }
 
@@ -115,7 +126,8 @@ fun PdfViewer(
                     canGoNext = currentPageIndex < bitmaps.size - 1,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(12.dp)
+                        .padding(12.dp),
+                    mainColor = mainColor
                 )
             }
         }

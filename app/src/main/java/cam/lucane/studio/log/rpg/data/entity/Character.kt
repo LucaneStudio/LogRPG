@@ -2,6 +2,8 @@ package cam.lucane.studio.log.rpg.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 @Entity(tableName = "characters")
 data class Character(
@@ -11,50 +13,72 @@ data class Character(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 
-    // PDF path
     val pdfPath: String? = null,
 
-    // Counters
+    // Compteurs
     val currentHealth: Int = 0,
     val maxHealth: Int = 100,
     val currentMana: Int = 0,
     val maxMana: Int = 100,
+
+    // ✨ Mode du compteur Mana/Sorts
+    val manaMode: ManaMode = ManaMode.MANA,
+
+    // ✨ Emplacements de sorts stockés en JSON
+    val spellSlotsJson: String = SpellSlot.defaultJson(),
+
     val notes: String? = null,
     val profileImagePath: String? = null,
-    // Currency settings
+
     val currencyMode: CurrencyMode = CurrencyMode.SINGLE,
     val credits: Int = 0
 )
 
-enum class CurrencyMode {
-    SINGLE,      // Affichage direct en crédits/pièces
-    BY_TEN,      // 1Pc=1, 1Pa=10, 1Po=100
-    BY_HUNDRED   // 1Pc=1, 1Pa=100, 1Po=10000
+// ── Mana mode ──────────────────────────────────────────────────────────────
+
+enum class ManaMode {
+    MANA,        // Barre classique avec +/−
+    SPELL_SLOTS  // Grille 3×3 des emplacements de sorts
 }
 
-// ✅ Extension pour convertir crédits → pièces affichables
-data class CurrencyDisplay(
-    val gold: Int,
-    val silver: Int,
-    val copper: Int
-)
+// ── Spell slots ────────────────────────────────────────────────────────────
 
-fun Character.getCurrencyDisplay(): CurrencyDisplay {
-    return when (currencyMode) {
-        CurrencyMode.SINGLE -> CurrencyDisplay(0, 0, credits)
-        CurrencyMode.BY_TEN -> {
-            val gold = credits / 100
-            val remainder = credits % 100
-            val silver = remainder / 10
-            val copper = remainder % 10
-            CurrencyDisplay(gold, silver, copper)
-        }
-        CurrencyMode.BY_HUNDRED -> {
-            val gold = credits / 10000
-            val remainder = credits % 10000
-            val silver = remainder / 100
-            val copper = remainder % 100
-            CurrencyDisplay(gold, silver, copper)
-        }
+data class SpellSlot(
+    val level: Int,
+    val current: Int,
+    val max: Int
+) {
+    val isActive get() = max > 0
+    val isDepleted get() = isActive && current == 0
+
+    companion object {
+        fun defaultJson(): String =
+            Gson().toJson((1..9).map { SpellSlot(level = it, current = 0, max = 0) })
     }
+}
+
+fun Character.getSpellSlots(): List<SpellSlot> = try {
+    val type = object : TypeToken<List<SpellSlot>>() {}.type
+    Gson().fromJson<List<SpellSlot>>(spellSlotsJson, type)
+        ?: (1..9).map { SpellSlot(it, 0, 0) }
+} catch (e: Exception) {
+    (1..9).map { SpellSlot(it, 0, 0) }
+}
+
+fun List<SpellSlot>.toJson(): String = Gson().toJson(this)
+
+// ── Currency ───────────────────────────────────────────────────────────────
+
+enum class CurrencyMode {
+    SINGLE,
+    BY_TEN,
+    BY_HUNDRED
+}
+
+data class CurrencyDisplay(val gold: Int, val silver: Int, val copper: Int)
+
+fun Character.getCurrencyDisplay(): CurrencyDisplay = when (currencyMode) {
+    CurrencyMode.SINGLE     -> CurrencyDisplay(0, 0, credits)
+    CurrencyMode.BY_TEN     -> CurrencyDisplay(credits / 100, (credits % 100) / 10, credits % 10)
+    CurrencyMode.BY_HUNDRED -> CurrencyDisplay(credits / 10000, (credits % 10000) / 100, credits % 100)
 }
