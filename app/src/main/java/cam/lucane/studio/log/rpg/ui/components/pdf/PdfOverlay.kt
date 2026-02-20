@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.PrimaryButton
 import cam.lucane.studio.log.rpg.ui.theme.BackgroundDark
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
@@ -57,17 +59,12 @@ fun PdfOverlay(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OutlinedButton(
+            PrimaryButton (
                 onClick = onPrevious,
                 enabled = canGoPrevious,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = mainColor,
-                    disabledContainerColor = mainColor.copy(alpha = 0.4f),
-                    contentColor = Color.White,
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
-                ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.height(38.dp).weight(1f),
+                color = if(canGoPrevious) mainColor else ColorsSystem.TextDisabled,
+                borderColor = if(canGoPrevious) mainColor.copy(0.35f) else ColorsSystem.PhoneBorder.copy(0.5f)
             ) {
                 Icon(
                     Icons.Default.ArrowBack,
@@ -79,7 +76,7 @@ fun PdfOverlay(
                     "Précédent",
                     fontSize = 12.sp,
                     fontFamily = NunitoFontFamily,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
                 )
             }
 
@@ -92,23 +89,18 @@ fun PdfOverlay(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
 
-            OutlinedButton(
+            PrimaryButton (
                 onClick = onNext,
                 enabled = canGoNext,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = mainColor,
-                    disabledContainerColor = mainColor.copy(alpha = 0.4f),
-                    contentColor = Color.White,
-                    disabledContentColor = Color.White.copy(alpha = 0.6f)
-                ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.height(38.dp).weight(1f),
+                color = if(canGoNext) mainColor else ColorsSystem.TextDisabled,
+                borderColor = if(canGoNext) mainColor.copy(0.35f) else ColorsSystem.PhoneBorder.copy(0.5f)
             ) {
                 Text(
                     "Suivant",
                     fontSize = 12.sp,
                     fontFamily = NunitoFontFamily,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(

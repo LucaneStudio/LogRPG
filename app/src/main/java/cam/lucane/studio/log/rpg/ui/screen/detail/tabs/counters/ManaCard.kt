@@ -9,6 +9,7 @@ import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.ManaBlue
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 
@@ -20,18 +21,16 @@ fun ManaCard(character: Character, viewModel: CharacterDetailViewModel) {
     var showModeDialog by remember { mutableStateOf(false) }
     var showEditMaxDialog by remember { mutableStateOf(false) }
 
-    val mainColor = remember(character.id) {
-        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
-        colors[(character.id % colors.size).toInt()]
-    }
 
     when (character.manaMode) {
         ManaMode.MANA -> {
             StatCounterCard(
-                label = "MANA",
+                label = "\uD83D\uDCA7 MANA",
                 current = character.currentMana,
                 max = character.maxMana,
-                accentColor = ManaBlue,
+                mainColor = ColorsSystem.Blue,
+                backgroundMainColor = ColorsSystem.BlueLight,
+                mainBrush = ColorsSystem.GradientBarMana,
                 temporaryLabel = if (character.currentMana > character.maxMana)
                     "Mana temporaire: +${character.currentMana - character.maxMana}" else null,
                 onMinus = {
@@ -52,7 +51,6 @@ fun ManaCard(character: Character, viewModel: CharacterDetailViewModel) {
         ManaMode.SPELL_SLOTS -> {
             SpellSlotsCard(
                 character = character,
-                mainColor = mainColor,
                 viewModel = viewModel,
                 onEditMode = { showModeDialog = true }
             )

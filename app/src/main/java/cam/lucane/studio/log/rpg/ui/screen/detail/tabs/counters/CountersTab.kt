@@ -12,7 +12,7 @@ import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 fun CountersTab(character: Character, viewModel: CharacterDetailViewModel) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { HealthCard(character, viewModel) }

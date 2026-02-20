@@ -11,6 +11,7 @@ object ColorsSystem {
     val BackgroundSurface = Color(0xFFF7FCFB)
     val PhoneBorder = Color(0xFFB8CCC9)
     val Divider = Color(0xFFEEF2F5)
+    val SecondBorder = Color(0xFFE0E8EC)
 
     // Text
     val TextPrimary = Color(0xFF2C3E50)

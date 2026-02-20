@@ -2,6 +2,8 @@ package cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,16 +17,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.ControlButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 
 @Composable
 fun StatCounterCard(
     label: String,
     current: Int,
     max: Int,
-    accentColor: Color,
+    mainColor: Color,
+    backgroundMainColor:  Color,
+    mainBrush: Brush,
     temporaryLabel: String?,
     onMinus: () -> Unit,
     onPlus: () -> Unit,
@@ -36,15 +42,20 @@ fun StatCounterCard(
     val isAtMax = current == max
 
     Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
+        modifier = Modifier
+            .fillMaxWidth()
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            )
     ) {
         Box {
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Ligne titre + boutons utilitaires
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -53,96 +64,127 @@ fun StatCounterCard(
                     Text(
                         text = label,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Black,
                         color = TextSecondary,
-                        letterSpacing = 1.5.sp
+                        letterSpacing = 1.5.sp,
+                        fontFamily = NunitoFontFamily
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         // Reset
-                        SmallIconBtn(
+                        CardOptionButton(
+                            modifier = Modifier.size(26.dp),
                             onClick = onReset,
-                            enabled = !isAtMax,
-                            tint = if (!isAtMax) AccentGreen else TextSecondary.copy(alpha = 0.3f)
+                            color = mainColor
                         ) {
-                            Icon(Icons.Default.Refresh, "Réinitialiser", modifier = Modifier.size(16.dp))
+                            Text(
+                                text = "💤",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                fontFamily = NunitoFontFamily
+                            )
                         }
                         // Edit max
-                        SmallIconBtn(onClick = onEditMax) {
-                            Icon(Icons.Default.Edit, "Modifier max", modifier = Modifier.size(16.dp))
+                        CardOptionButton(
+                            modifier = Modifier.size(26.dp),
+                            onClick = onEditMax,
+                            color = mainColor
+                        ) {
+                            Text(
+                                text = "✏️",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                fontFamily = NunitoFontFamily
+                            )
                         }
                         onEditMode?.let { action ->
-                            SmallIconBtn(onClick = action) {
-                                Icon(Icons.Default.Settings, "Changer de mode", modifier = Modifier.size(16.dp))
+                            CardOptionButton(
+                                modifier = Modifier.size(26.dp),
+                                onClick = action,
+                                color = mainColor
+                            ) {
+                                Text(
+                                    text = "⚙️",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Black,
+                                    fontFamily = NunitoFontFamily
+                                )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // Barre de progression
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(CircleShape)
+                        .background(ColorsSystem.Divider)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .clip(CircleShape)
+                            .background(
+                                mainBrush
+                            )
+                    )
+                }
 
                 // Valeur + contrôles
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     // Bouton -
                     ControlButton(
                         onClick = onMinus,
-                        color = accentColor.copy(alpha = 0.15f),
-                        borderColor = accentColor.copy(alpha = 0.3f)
+                        containerColor = backgroundMainColor,
                     ) {
-                        Icon(Icons.Default.Remove, "Moins", tint = accentColor, modifier = Modifier.size(18.dp))
+                        Text(
+                            text = "-",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = mainColor,
+                            fontFamily = NunitoFontFamily
+                        )
                     }
 
                     // Valeur
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "$current",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = accentColor
+                            fontSize = 36.sp,
+                            lineHeight = 38.sp,
+                            fontWeight = FontWeight.Black,
+                            color = mainColor,
+                            fontFamily = NunitoFontFamily
                         )
                         Text(
                             text = "/ $max",
                             fontSize = 13.sp,
-                            color = TextSecondary
+                            lineHeight = 14.sp,
+                            color = ColorsSystem.TextDisabled,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = NunitoFontFamily
                         )
                     }
 
                     // Bouton +
                     ControlButton(
                         onClick = onPlus,
-                        color = accentColor.copy(alpha = 0.15f),
-                        borderColor = accentColor.copy(alpha = 0.3f)
+                        containerColor = backgroundMainColor,
                     ) {
-                        Icon(Icons.Default.Add, "Plus", tint = accentColor, modifier = Modifier.size(18.dp))
+                        Text(
+                            text = "+",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = mainColor,
+                            fontFamily = NunitoFontFamily
+                        )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Barre de progression
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White.copy(alpha = 0.07f))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(progress)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(accentColor, accentColor.copy(alpha = 0.6f))
-                                )
-                            )
-                    )
                 }
 
                 // Label PV temporaires
@@ -151,7 +193,7 @@ fun StatCounterCard(
                     Text(
                         text = it,
                         fontSize = 11.sp,
-                        color = accentColor,
+                        color = mainColor,
                         fontWeight = FontWeight.Medium
                     )
                 }

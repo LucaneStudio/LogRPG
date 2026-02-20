@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,14 +35,20 @@ import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.entity.CurrencyMode
 import cam.lucane.studio.log.rpg.data.entity.getCurrencyDisplay
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.PrimaryButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
 import cam.lucane.studio.log.rpg.ui.dialog.counters.CurrencyInputDialog
 import cam.lucane.studio.log.rpg.ui.dialog.counters.CurrencyModeDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentCopper
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
+import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 
 @Composable
@@ -52,28 +59,46 @@ fun CurrencyCard(character: Character, viewModel: CharacterDetailViewModel) {
 
     val display = character.getCurrencyDisplay()
 
+    val mainColor = getAccentColorByCharacterId(character.id)
+
     Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
+        modifier = Modifier
+            .fillMaxWidth()
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            )
     ) {
         Box {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "MONNAIE",
+                        "\uD83D\uDCB0 MONNAIE",
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Black,
                         color = TextSecondary,
-                        letterSpacing = 1.5.sp
+                        letterSpacing = 1.5.sp,
+                        fontFamily = NunitoFontFamily
                     )
-                    SmallIconBtn(onClick = { showModeDialog = true }) {
-                        Icon(Icons.Default.Settings, "Mode", modifier = Modifier.size(16.dp))
+                    CardOptionButton(
+                        modifier = Modifier.size(26.dp),
+                        onClick = { showModeDialog = true },
+                        color = mainColor
+                    ) {
+                        Text(
+                            text = "⚙️",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily
+                        )
                     }
                 }
 
@@ -83,24 +108,27 @@ fun CurrencyCard(character: Character, viewModel: CharacterDetailViewModel) {
                 when (character.currencyMode) {
                     CurrencyMode.SINGLE -> {
                         Text(
-                            "${character.credits}",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentGold
+                            text = "${character.credits}",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily,
+                            color = ColorsSystem.TextSecondary
                         )
-                        Text("crédits", fontSize = 13.sp, color = TextSecondary)
                     }
                     CurrencyMode.BY_TEN, CurrencyMode.BY_HUNDRED -> {
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            CoinDisplay("Or", display.gold, AccentGold)
-                            CoinDisplay("Argent", display.silver, TextSecondary)
-                            CoinDisplay("Cuivre", display.copper,AccentCopper)
+                        Row(modifier = Modifier.fillMaxWidth(0.8f), horizontalArrangement = Arrangement.SpaceBetween) {
+                            CoinDisplay("Or", display.gold, ColorsSystem.Yellow)
+                            CoinDisplay("Argent", display.silver, ColorsSystem.TextSecondary)
+                            CoinDisplay("Cuivre", display.copper,ColorsSystem.Orange)
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             "Total : ${character.credits} crédits",
-                            fontSize = 11.sp,
-                            color = TextSecondary.copy(alpha = 0.6f)
+                            fontSize = 14.sp,
+                            color = ColorsSystem.TextDisabled,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = NunitoFontFamily,
+
                         )
                     }
                 }
@@ -108,29 +136,31 @@ fun CurrencyCard(character: Character, viewModel: CharacterDetailViewModel) {
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
+                    PrimaryButton (
                         onClick = { showAddDialog = true },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp, AccentGold.copy(alpha = 0.4f)
-                        )
+                        modifier = Modifier.height(40.dp).weight(1f),
+                        color = ColorsSystem.Orange,
+                        borderColor = ColorsSystem.Orange.copy(0.35f)
                     ) {
-                        Icon(Icons.Default.Add, null, tint = AccentGold, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ajouter", color = AccentGold, fontSize = 13.sp)
+                        Text(
+                            text = "+ Ajouter",
+                            fontSize = 13.sp,
+                            fontFamily = NunitoFontFamily,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     }
-                    OutlinedButton(
+                    PrimaryButton(
                         onClick = { showSpendDialog = true },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp, BorderSubtle
-                        )
+                        modifier = Modifier.height(40.dp).weight(1f),
+                        color = ColorsSystem.TextSecondary,
+                        borderColor = ColorsSystem.SecondBorder
                     ) {
-                        Icon(Icons.Default.Remove, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Dépenser", color = TextSecondary, fontSize = 13.sp)
+                        Text(
+                            text = "- Dépenser",
+                            fontSize = 13.sp,
+                            fontFamily = NunitoFontFamily,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     }
                 }
             }
@@ -178,15 +208,19 @@ private fun CoinDisplay(label: String, value: Int, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = "$value",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Black,
+            fontFamily = NunitoFontFamily,
             color = color
         )
         Text(
+            modifier = Modifier.offset(y = (-3).dp),
             text = label,
-            fontSize = 10.sp,
-            color = TextSecondary,
-            letterSpacing = 0.5.sp
+            fontSize = 16.sp,
+            color = ColorsSystem.TextDisabled,
+            fontWeight = FontWeight.Black,
+            fontFamily = NunitoFontFamily,
+            letterSpacing = 1.sp
         )
     }
 }

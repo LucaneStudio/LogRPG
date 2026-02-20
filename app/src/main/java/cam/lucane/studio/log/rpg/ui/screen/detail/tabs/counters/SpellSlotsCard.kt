@@ -1,8 +1,11 @@
 package cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters
 
+import android.R
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -20,10 +23,13 @@ import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.entity.SpellSlot
 import cam.lucane.studio.log.rpg.data.entity.getSpellSlots
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.PrimaryButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
 import cam.lucane.studio.log.rpg.ui.dialog.counters.SpellSlotLevelDialog
 import cam.lucane.studio.log.rpg.ui.dialog.counters.SpellSlotsConfigDialog
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlinx.coroutines.launch
 
@@ -31,7 +37,6 @@ import kotlinx.coroutines.launch
 fun SpellSlotsCard(
     character: Character,
     viewModel: CharacterDetailViewModel,
-    mainColor: Color,
     onEditMode: (() -> Unit)? = null
 ) {
     val slots = character.getSpellSlots()
@@ -39,10 +44,16 @@ fun SpellSlotsCard(
     var editingSlot by remember { mutableStateOf<SpellSlot?>(null) }
 
     Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = BorderStroke(1.dp, BorderSubtle),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
+        modifier = Modifier
+            .fillMaxWidth()
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
@@ -53,23 +64,39 @@ fun SpellSlotsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "EMPLACEMENTS DE SORTS",
+                    "\uD83D\uDCD6 EMPLACEMENTS DE SORTS",
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextSecondary,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.Black,
+                    color = ColorsSystem.TextDisabled,
                     letterSpacing = 1.5.sp
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    SmallIconBtn(onClick = { showConfigDialog = true }) {
-                        Icon(Icons.Default.Edit, "Configurer", modifier = Modifier.size(16.dp))
+                    CardOptionButton(
+                        modifier = Modifier.size(26.dp),
+                        onClick = { showConfigDialog = true },
+                        color = ColorsSystem.Blue
+                    ) {
+                        Text(
+                            text = "✏️",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily
+                        )
                     }
+
                     onEditMode?.let { action ->
-                        SmallIconBtn(onClick = action) {
-                            Icon(
-                                Icons.Default.Settings,
-                                "Changer de mode",
-                                modifier = Modifier.size(16.dp)
+                        CardOptionButton(
+                            modifier = Modifier.size(26.dp),
+                            onClick = action,
+                            color = ColorsSystem.Blue
+                        ) {
+                            Text(
+                                text = "⚙️",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                fontFamily = NunitoFontFamily
                             )
                         }
                     }
@@ -79,10 +106,12 @@ fun SpellSlotsCard(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 "👆 Tap = utiliser  ·  👆👆 Double tap = récupérer  ·  ⏱ Long = modifier",
-                fontSize = 9.sp,
-                color = TextSecondary.copy(alpha = 0.7f),
+                fontSize = 8.sp,
+                color = ColorsSystem.TextDisabled,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontFamily = NunitoFontFamily
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -95,8 +124,10 @@ fun SpellSlotsCard(
                     row.forEach { slot ->
                         SpellSlotCell(
                             slot = slot,
-                            mainColor = mainColor,
-                            modifier = Modifier.weight(1f),
+                            mainColor = ColorsSystem.Blue,
+                            modifier = Modifier
+                                .height(70.dp)
+                                .weight(1f),
                             onUse = {
                                 if (slot.current > 0)
                                     viewModel.updateSpellSlots(slots.updateSlot(slot.copy(current = slot.current - 1)))
@@ -111,33 +142,42 @@ fun SpellSlotsCard(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
             }
-
+            Spacer(modifier = Modifier.height(12.dp))
             // Boutons de reset
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
+                PrimaryButton (
                     onClick = {
-                        // Repos court : reset niveaux 1 et 2 uniquement
                         val updated = slots.map {
                             if (it.level <= 2) it.copy(current = it.max) else it
                         }
                         viewModel.updateSpellSlots(updated)
                     },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, AccentGold.copy(alpha = 0.4f))
+                    modifier = Modifier.height(36.dp).weight(1f),
+                    color = ColorsSystem.Orange,
+                    borderColor = ColorsSystem.Orange.copy(0.35f)
                 ) {
-                    Text("☀️ Repos court", color = AccentGold, fontSize = 12.sp)
+                    Text(
+                        text = "☀️ Repos court",
+                        fontSize = 12.sp,
+                        fontFamily = NunitoFontFamily,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
                 }
-                OutlinedButton(
+                PrimaryButton(
                     onClick = {
                         // Repos long : reset tous les niveaux actifs
                         viewModel.updateSpellSlots(slots.map { it.copy(current = it.max) })
                     },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ManaBlue.copy(alpha = 0.4f))
+                    modifier = Modifier.height(36.dp).weight(1f),
+                    color = ColorsSystem.Blue,
+                    borderColor = ColorsSystem.Blue.copy(0.35f)
                 ) {
-                    Text("🌙 Repos long", color = ManaBlue, fontSize = 12.sp)
+                    Text(
+                        text = "🌙 Repos long",
+                        fontSize = 12.sp,
+                        fontFamily = NunitoFontFamily,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
                 }
             }
         }
@@ -183,15 +223,17 @@ private fun SpellSlotCell(
     onEditLevel: () -> Unit
 ) {
     val accentColor = when {
-        !slot.isActive  -> TextSecondary.copy(alpha = 0.3f)
-        slot.isDepleted -> TextSecondary.copy(alpha = 0.4f)
+        !slot.isActive  -> ColorsSystem.TextDisabled
+        slot.isDepleted -> ColorsSystem.TextDisabled
         else            -> mainColor
     }
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = if (!slot.isActive) GlassSurface else mainColor.copy(0.1f)),
-        border = BorderStroke(1.dp, BorderSubtle),
+        colors = CardDefaults.cardColors(
+            containerColor = if (!slot.isActive) ColorsSystem.BackgroundSurface else mainColor.copy(0.1f)
+        ),
+        border = BorderStroke(1.dp, if(!slot.isActive)ColorsSystem.Divider else mainColor.copy(0.2f)),
         modifier = modifier.pointerInput(slot) {
             var tapCount = 0
             var tapJob: kotlinx.coroutines.Job? = null
@@ -216,28 +258,49 @@ private fun SpellSlotCell(
         }
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 "NIV. ${slot.level}",
                 fontSize = 8.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextSecondary,
+                fontFamily = NunitoFontFamily,
+                fontWeight = FontWeight.Black,
+                color = ColorsSystem.TextDisabled,
                 letterSpacing = 0.5.sp
             )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = if (!slot.isActive) "—" else "${slot.current}",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = accentColor
-            )
-            Text(
-                text = if (!slot.isActive) "" else "/ ${slot.max}",
-                fontSize = 9.sp,
-                color = TextSecondary
-            )
+            if (!slot.isActive) {
+                Box(Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.3f)
+                            .offset(y = (-5).dp)
+                            .height(3.dp)
+                            .background(color = ColorsSystem.TextDisabled, shape = CircleShape)
+                    )
+                }
+            }
+            else {
+                Text(
+                    text = "${slot.current}",
+                    fontSize = 22.sp,
+                    lineHeight = 22.sp,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.Black,
+                    color = accentColor
+                )
+
+                Text(
+                    text = "/ ${slot.max}",
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorsSystem.TextDisabled
+                )
+            }
         }
     }
 }

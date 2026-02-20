@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.ui.dialog.counters.EditMaxDialog
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.HealthRed
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 
@@ -15,10 +16,12 @@ fun HealthCard(character: Character, viewModel: CharacterDetailViewModel) {
     var showEditMaxDialog by remember { mutableStateOf(false) }
 
     StatCounterCard(
-        label = "POINTS DE VIE",
+        label = "❤\uFE0F POINTS DE VIE",
         current = character.currentHealth,
         max = character.maxHealth,
-        accentColor = HealthRed,
+        mainColor = ColorsSystem.Red,
+        backgroundMainColor = ColorsSystem.RedLight,
+        mainBrush = ColorsSystem.GradientBarHealth,
         temporaryLabel = if (character.currentHealth > character.maxHealth)
             "PV temporaires: +${character.currentHealth - character.maxHealth}" else null,
         onMinus = {
