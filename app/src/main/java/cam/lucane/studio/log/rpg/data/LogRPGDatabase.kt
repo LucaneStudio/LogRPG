@@ -15,10 +15,12 @@ import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.entity.Item
 import cam.lucane.studio.log.rpg.data.entity.SpellSlot
 import com.google.gson.Gson
+import cam.lucane.studio.log.rpg.data.dao.NoteDao
+import cam.lucane.studio.log.rpg.data.entity.Note
 
 @Database(
-    entities = [Character::class, Ability::class, Item::class],
-    version = 6,
+    entities = [Character::class, Ability::class, Item::class, Note::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -26,6 +28,7 @@ abstract class LogRPGDatabase : RoomDatabase() {
     abstract fun characterDao(): CharacterDao
     abstract fun abilityDao(): AbilityDao
     abstract fun itemDao(): ItemDao
+    abstract fun noteDao(): NoteDao
 
     companion object {
         @Volatile
@@ -82,6 +85,23 @@ abstract class LogRPGDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                characterId INTEGER NOT NULL,
+                title TEXT NOT NULL DEFAULT 'Nouvelle note',
+                content TEXT NOT NULL DEFAULT '',
+                createdAt INTEGER NOT NULL,
+                updatedAt INTEGER NOT NULL,
+                FOREIGN KEY (characterId) REFERENCES characters(id) ON DELETE CASCADE
+            )
+        """)
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_notes_characterId ON notes(characterId)")
+            }
+        }
+
         fun getDatabase(context: Context): LogRPGDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -90,8 +110,12 @@ abstract class LogRPGDatabase : RoomDatabase() {
                     "logrpg_database"
                 )
                     .addMigrations(
-                        MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
-                        MIGRATION_4_5, MIGRATION_5_6
+                        MIGRATION_1_2,
+                        MIGRATION_2_3,
+                        MIGRATION_3_4,
+                        MIGRATION_4_5,
+                        MIGRATION_5_6,
+                        MIGRATION_6_7
                     )
                     .build()
                     .also { INSTANCE = it }

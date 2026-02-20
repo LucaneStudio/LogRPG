@@ -39,6 +39,13 @@ class CharacterDetailViewModel(
             initialValue = emptyList()
         )
 
+    val notes: StateFlow<List<Note>> = repository.getNotes(characterId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     // PDF
     fun updatePdf(pdfPath: String?) {
         viewModelScope.launch {
@@ -183,5 +190,17 @@ class CharacterDetailViewModel(
         viewModelScope.launch {
             repository.removeProfileImage(characterId)
         }
+    }
+
+    fun addNote(title: String = "Nouvelle note", onCreated: (Long) -> Unit = {}) {
+        viewModelScope.launch { val id = repository.addNote(characterId, title); onCreated(id) }
+    }
+
+    fun updateNote(note: Note) {
+        viewModelScope.launch { repository.updateNote(note) }
+    }
+
+    fun deleteNote(note: Note) {
+        viewModelScope.launch { repository.deleteNote(note) }
     }
 }

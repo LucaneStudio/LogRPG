@@ -13,11 +13,13 @@ import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.File
+import cam.lucane.studio.log.rpg.data.dao.NoteDao
 
 class CharacterRepository(
     private val characterDao: CharacterDao,
     private val abilityDao: AbilityDao,
-    private val itemDao: ItemDao
+    private val itemDao: ItemDao,
+    private val noteDao: NoteDao
 ) {
     private val gson = Gson()
 
@@ -289,6 +291,22 @@ class CharacterRepository(
                 e.printStackTrace()
             }
         }
+    }
+
+    // ========== NOTES ==========
+    fun getNotes(characterId: Long) = noteDao.getNotesByCharacter(characterId)
+
+    suspend fun addNote(characterId: Long, title: String = "Nouvelle note"): Long {
+        val note = Note(characterId = characterId, title = title)
+        return noteDao.insertNote(note)
+    }
+
+    suspend fun updateNote(note: Note) {
+        noteDao.updateNote(note.copy(updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun deleteNote(note: Note) {
+        noteDao.deleteNote(note)
     }
 }
 

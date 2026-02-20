@@ -16,7 +16,8 @@ class CharacterListViewModel(application: Application) : AndroidViewModel(applic
     private val repository = CharacterRepository(
         database.characterDao(),
         database.abilityDao(),
-        database.itemDao()
+        database.itemDao(),
+        database.noteDao()
     )
     
     val characters: StateFlow<List<Character>> = repository.getAllCharacters()

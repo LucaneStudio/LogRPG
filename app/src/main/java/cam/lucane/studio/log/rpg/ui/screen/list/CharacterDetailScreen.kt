@@ -93,7 +93,7 @@ fun CharacterDetailScreen(
     var selectedTab by remember { mutableStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
-
+    val notesList by viewModel.notes.collectAsState()
     val tabs = listOf("FICHE", "COMPT.", "SORTS", "INV.", "NOTES")
     val tabIcons = listOf(
         Icons.Default.Description,
@@ -303,7 +303,7 @@ fun CharacterDetailScreen(
                         1 -> CountersTab(char, viewModel)
                         2 -> AbilitiesTab(characterId, viewModel)
                         3 -> InventoryTab(characterId, viewModel)
-                        4 -> NotesTab(char, viewModel)
+                        4 -> NotesTab(notes = notesList, viewModel = viewModel)
                     }
                 }
             }

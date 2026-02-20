@@ -17,7 +17,8 @@ class CharacterDetailViewModelFactory(
             val repository = CharacterRepository(
                 database.characterDao(),
                 database.abilityDao(),
-                database.itemDao()
+                database.itemDao(),
+                database.noteDao()
             )
             @Suppress("UNCHECKED_CAST")
             return CharacterDetailViewModel(characterId, repository, application) as T
