@@ -1,4 +1,4 @@
-package cam.lucane.studio.log.rpg.ui.components.common
+package cam.lucane.studio.log.rpg.ui.components.common.buttons
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

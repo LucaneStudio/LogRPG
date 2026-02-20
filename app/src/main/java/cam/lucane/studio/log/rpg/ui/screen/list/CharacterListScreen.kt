@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,14 +16,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
+import cam.lucane.studio.log.rpg.ui.components.common.header.HomeHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.CreateCharacterDialog
 import cam.lucane.studio.log.rpg.ui.screen.list.components.CharacterCard
 import cam.lucane.studio.log.rpg.ui.theme.*
@@ -65,59 +68,22 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
+            .background(ColorsSystem.BackgroundApp)
     ) {
         // ── Contenu principal ────────────────────────────────────────────
         Scaffold(
-            modifier = Modifier.haze(hazeState),
+            modifier = Modifier.haze(hazeState).systemBarsPadding(),
             containerColor = Color.Transparent,
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "LogRPG",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentPurpleLight
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, "Menu", tint = TextSecondary)
+                HomeHeader(
+                    onImportClick = {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/json"
                         }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Importer un personnage") },
-                                leadingIcon = { Icon(Icons.Default.Download, null) },
-                                onClick = {
-                                    showMenu = false
-                                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                                        addCategory(Intent.CATEGORY_OPENABLE)
-                                        type = "application/json"
-                                    }
-                                    importLauncher.launch(intent)
-                                }
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
+                        importLauncher.launch(intent)
+                    }
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { showCreateDialog = true },
-                    shape = RoundedCornerShape(16.dp),
-                    containerColor = AccentPurple,
-                    contentColor = Color.White,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(Icons.Default.Add, "Nouveau personnage", modifier = Modifier.size(24.dp))
-                }
             }
         ) { padding ->
             if (characters.isEmpty()) {
@@ -133,8 +99,21 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
                         .fillMaxSize()
                         .padding(padding),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    item{
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp),
+                            text = "MES PERSONNAGES",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily,
+                            textAlign = TextAlign.Start,
+                            color = ColorsSystem.TextDisabled,
+                            letterSpacing = (1.5).sp
+                        )
+                    }
                     items(characters, key = { it.id }) { character ->
                         CharacterCard(
                             character = character,
@@ -142,7 +121,16 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
                             onDelete = { showDeleteDialog = character }
                         )
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    item { Spacer(modifier = Modifier.height(1.dp)) }
+                    item {
+                        DotButton(
+                            modifier = Modifier.fillMaxWidth(0.9f),
+                            label = "＋ Ajouter un personnage",
+                            dashColor = ColorsSystem.Green.copy(0.4f),
+                            labelColor = ColorsSystem.GreenDark,
+                            onClick = { showCreateDialog = true }
+                        )
+                    }
                 }
             }
         }
@@ -199,25 +187,25 @@ private fun CharacterEmptyState(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             "Aucun personnage",
-            fontSize = 20.sp,
+            fontSize = 15.sp,
+            fontFamily = NunitoFontFamily,
+            color = ColorsSystem.TextPrimary,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Créez votre premier aventurier",
             fontSize = 14.sp,
-            color = TextSecondary
+            fontFamily = NunitoFontFamily,
+            color = ColorsSystem.TextSecondary,
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = onCreateClick,
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = ColorsSystem.Green)
         ) {
-            Icon(Icons.Default.Add, null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Créer un personnage")
+            Text("＋ Ajouter un personnage")
         }
     }
 }

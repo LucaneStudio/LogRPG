@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.entity.CurrencyMode
 import cam.lucane.studio.log.rpg.data.entity.getCurrencyDisplay
-import cam.lucane.studio.log.rpg.ui.components.common.SmallIconBtn
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
 import cam.lucane.studio.log.rpg.ui.dialog.counters.CurrencyInputDialog
 import cam.lucane.studio.log.rpg.ui.dialog.counters.CurrencyModeDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentCopper

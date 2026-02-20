@@ -87,4 +87,5 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze:1.0.1")
     implementation("dev.chrisbanes.haze:haze-materials:1.0.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.28.0")
 }

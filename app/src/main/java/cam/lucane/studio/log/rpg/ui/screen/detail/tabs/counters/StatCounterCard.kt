@@ -1,11 +1,8 @@
 package cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters
 
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,16 +13,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cam.lucane.studio.log.rpg.data.entity.Character
-import cam.lucane.studio.log.rpg.data.entity.CurrencyMode
-import cam.lucane.studio.log.rpg.data.entity.getCurrencyDisplay
-import cam.lucane.studio.log.rpg.ui.components.common.ControlButton
-import cam.lucane.studio.log.rpg.ui.components.common.SmallIconBtn
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.ControlButton
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
 import cam.lucane.studio.log.rpg.ui.theme.*
-import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 
 @Composable
 fun StatCounterCard(

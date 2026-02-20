@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -34,18 +35,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.util.TableInfo
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.data.entity.ManaMode
+import cam.lucane.studio.log.rpg.data.entity.SpellSlot
+import cam.lucane.studio.log.rpg.data.entity.getSpellSlots
 import cam.lucane.studio.log.rpg.ui.components.common.ProfileImage
+import cam.lucane.studio.log.rpg.ui.screen.list.components.bar.HealthManaBar
+import cam.lucane.studio.log.rpg.ui.screen.list.components.bar.SpellSlotsBar
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
 import cam.lucane.studio.log.rpg.ui.theme.HealthRed
 import cam.lucane.studio.log.rpg.ui.theme.ManaBlue
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
+import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,64 +68,50 @@ fun CharacterCard(
 ) {
     // Couleur d'accent basée sur le nom (pour différencier les cartes)
     val accentColor = remember(character.id) {
-        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
-        colors[(character.id % colors.size).toInt()]
+        getAccentColorByCharacterId(character.id)
+    }
+
+    val accentBrush = remember(character.id) {
+        getAccentBrushByCharacterId(character.id)
     }
 
     Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            ),
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = BorderStroke(1.dp, BorderSubtle),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard, contentColor = accentColor),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Orbe d'ambiance dans la carte
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 30.dp, y = (-20).dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(accentColor.copy(alpha = 0.2f), Color.Transparent)
-                        )
-                    )
+        Row(
+            modifier = Modifier.padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ProfileImage(
+                characterName = character.name,
+                imagePath = character.profileImagePath,
+                size = 65.dp,
+                accentBrush = accentBrush
             )
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Header : Avatar + nom + bouton supprimer
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // ✅ NOUVEAU CODE
-                    ProfileImage(
-                        characterName = character.name,
-                        imagePath = character.profileImagePath,
-                        size = 56.dp,
-                        color = accentColor
+            Column() {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = character.name,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = ColorsSystem.TextPrimary,
+                        fontFamily = NunitoFontFamily
                     )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = character.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Appuyer pour ouvrir",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
 
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(20.dp),
                     ) {
                         Icon(
                             Icons.Default.Delete,
@@ -123,75 +121,31 @@ fun CharacterCard(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Barres PV et Mana
+                Spacer(Modifier.size(5.dp))
                 HealthManaBar(
-                    label = "PV",
+                    label = "❤\uFE0F",
                     current = character.currentHealth,
                     max = character.maxHealth,
-                    color = HealthRed
+                    color = ColorsSystem.Red
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                HealthManaBar(
-                    label = "PM",
-                    current = character.currentMana,
-                    max = character.maxMana,
-                    color = ManaBlue
-                )
+
+                if (character.manaMode == ManaMode.MANA) {
+                    HealthManaBar(
+                        label = "\uD83D\uDCA7",
+                        current = character.currentMana,
+                        max = character.maxMana,
+                        color = ColorsSystem.Blue
+                    )
+                }
+                else {
+                    val activeSlots = character.getSpellSlots().filter { it.max > 0 }
+                    SpellSlotsBar(
+                        label = "📖",
+                        slots = activeSlots
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun HealthManaBar(
-    label: String,
-    current: Int,
-    max: Int,
-    color: Color
-) {
-    val progress = if (max > 0) (current.toFloat() / max).coerceIn(0f, 1f) else 0f
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            color = color,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.width(20.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(5.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color.White.copy(alpha = 0.07f))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(color, color.copy(alpha = 0.7f))
-                        )
-                    )
-            )
-        }
-
-        Text(
-            text = "$current/$max",
-            fontSize = 10.sp,
-            color = TextSecondary,
-            modifier = Modifier.width(40.dp),
-            textAlign = TextAlign.End
-        )
-    }
-}

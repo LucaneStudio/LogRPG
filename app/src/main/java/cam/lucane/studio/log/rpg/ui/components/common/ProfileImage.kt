@@ -24,65 +24,60 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import coil.compose.AsyncImage
 import java.io.File
 
 @Composable
 fun ProfileImage(
     characterName: String,
+    accentBrush: Brush,
     imagePath: String?,
-    color: Color,
     size: Dp = 80.dp,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val borderWidth = (size.value / 30).dp
-
     Box(
-        modifier = modifier
-            .size(size)
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        color.copy(alpha = 0.3f),
-                        color.copy(alpha = 0.1f)
-                    )
-                )
-            )
-            .border(borderWidth, BorderSubtle, RoundedCornerShape(14.dp))
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable { onClick() }
-                } else {
-                    Modifier
-                }
-            ),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.coloredShadow(
+            color = Color.Black.copy(0.1f),
+            borderRadius = 20.dp,
+            blurRadius = 12.dp,
+            offsetY = 4.dp
+        )
     ) {
-        if (imagePath != null && File(imagePath).exists()) {
-            // Image personnalisée
-            AsyncImage(
-                model = Uri.fromFile(File(imagePath)),
-                contentDescription = "Photo de $characterName",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            // Fallback : initiale + icône
-            Icon(
-                Icons.Default.Person,
-                contentDescription = null,
-                tint = color.copy(alpha = 0.3f),
-                modifier = Modifier.size(size * 0.6f)
-            )
-
-            Text(
-                text = characterName.firstOrNull()?.uppercase() ?: "?",
-                fontSize = (size.value / 2.5).sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
+        Box(
+            modifier = modifier
+                .size(size)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    accentBrush
+                )
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable { onClick() }
+                    } else {
+                        Modifier
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (imagePath != null && File(imagePath).exists()) {
+                // Image personnalisée
+                AsyncImage(
+                    model = Uri.fromFile(File(imagePath)),
+                    contentDescription = "Photo de $characterName",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(
+                    text = characterName.firstOrNull()?.uppercase() ?: "?",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = NunitoFontFamily,
+                    color = Color.White
+                )
+            }
         }
     }
 }
