@@ -44,8 +44,6 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
     var showDeleteDialog by remember { mutableStateOf<Character?>(null) }
     var showMenu by remember { mutableStateOf(false) }
 
-    val hazeState = remember { HazeState() }
-
     // Launcher pour importer un personnage
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -72,7 +70,7 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
     ) {
         // ── Contenu principal ────────────────────────────────────────────
         Scaffold(
-            modifier = Modifier.haze(hazeState).systemBarsPadding(),
+            modifier = Modifier.systemBarsPadding(),
             containerColor = Color.Transparent,
             topBar = {
                 HomeHeader(

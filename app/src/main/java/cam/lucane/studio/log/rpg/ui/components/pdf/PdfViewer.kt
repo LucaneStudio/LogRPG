@@ -6,6 +6,8 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,13 +30,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.util.TableInfo
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.HealthRed
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
+import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -51,10 +60,8 @@ fun PdfViewer(
     var currentPageIndex by remember { mutableStateOf(0) }
 
     val mainColor = remember(characterId) {
-        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
-        colors[(characterId % colors.size).toInt()]
+        getAccentColorByCharacterId(characterId)
     }
-
 
     // Charger le PDF
     LaunchedEffect(pdfFile) {
@@ -73,18 +80,22 @@ fun PdfViewer(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         when {
             isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = AccentPurple
-                )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(
+                        color = AccentPurple
+                    )
+                }
             }
+
             error != null -> {
                 Column(
                     modifier = Modifier
-                        .align(Alignment.Center)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -98,10 +109,19 @@ fun PdfViewer(
                     Text(error!!, color = HealthRed, fontSize = 13.sp)
                 }
             }
+
             bitmaps.isNotEmpty() -> {
-                // Zone PDF plein écran
+
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(shape = RoundedCornerShape(20.dp))
+                        .background(color = ColorsSystem.TextDisabled)
+                        .border(
+                            width = 5.dp,
+                            color = ColorsSystem.BackgroundApp,
+                            shape = RoundedCornerShape(20.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     PdfPageImage(
@@ -124,9 +144,7 @@ fun PdfViewer(
                     },
                     canGoPrevious = currentPageIndex > 0,
                     canGoNext = currentPageIndex < bitmaps.size - 1,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(12.dp),
+                    modifier = Modifier.padding(12.dp),
                     mainColor = mainColor
                 )
             }

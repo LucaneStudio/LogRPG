@@ -7,6 +7,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -41,6 +43,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -58,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cam.lucane.studio.log.rpg.ui.components.common.header.CharacterDetailHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.ProfileImagePicker
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.abilities.AbilitiesTab
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters.CountersTab
@@ -70,9 +74,13 @@ import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
 import cam.lucane.studio.log.rpg.ui.theme.BackgroundDark
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
 import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
+import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModelFactory
 import java.io.File
@@ -104,118 +112,74 @@ fun CharacterDetailScreen(
         Icons.Default.Notes
     )
 
-    // Couleur d'accent du personnage (stable par ID)
-    val accentColor = remember(characterId) {
-        val colors = listOf(AccentRed, AccentPurple, AccentGreen, AccentGold)
-        colors[(characterId % colors.size).toInt()]
-    }
-
-    // Export launcher
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                viewModel.exportCharacter { json ->
-                    context.contentResolver.openOutputStream(uri)?.use {
-                        it.write(json.toByteArray())
-                    }
-                }
-            }
-        }
-    }
-
-    val pdfLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val outputFile = File(context.filesDir, "character_${characterId}_sheet.pdf")
-                    inputStream?.use { input ->
-                        outputFile.outputStream().use { output ->
-                            input.copyTo(output)
+    character?.let { character ->
+        // Export launcher
+        val exportLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    viewModel.exportCharacter { json ->
+                        context.contentResolver.openOutputStream(uri)?.use {
+                            it.write(json.toByteArray())
                         }
                     }
-                    viewModel.updatePdf(outputFile.absolutePath)
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
             }
         }
-    }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundDark)
-            .systemBarsPadding()
-    ) {
-        // Orbe ambiance en haut, couleur du personnage
+        val pdfLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        val outputFile =
+                            File(context.filesDir, "character_${characterId}_sheet.pdf")
+                        inputStream?.use { input ->
+                            outputFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        viewModel.updatePdf(outputFile.absolutePath)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
-                .size(400.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = (-150).dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(accentColor.copy(alpha = 0.20f), Color.Transparent)
-                    )
-                )
-        )
-
-        character?.let { char ->
+                .fillMaxSize()
+                .background(ColorsSystem.BackgroundApp)
+                .systemBarsPadding()
+        ) {
             Column(modifier = Modifier.fillMaxSize()) {
 
                 // ── Header ────────────────────────────────────────────────
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 44.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+                CharacterDetailHeader(
+                    character = character,
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    onBackClick = onNavigateBack,
                 ) {
-                    // Bouton retour
-                    IconButton(
-                        onClick = onNavigateBack,
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.CenterStart)
                             .size(38.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(GlassSurface)
-                    ) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            "Retour",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Nom du personnage
-                    Text(
-                        text = char.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = accentColor,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-
-                    // Menu
-                    Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                        IconButton(
-                            onClick = { showMenu = true },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(GlassSurface)
-                        ) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                "Menu",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(20.dp)
+                            .coloredShadow(
+                                ColorsSystem.Shadow.copy(0.08f),
+                                99.dp,
+                                10.dp,
+                                offsetY = 3.dp
                             )
-                        }
+                            .background(ColorsSystem.BackgroundCard, CircleShape)
+                            .clickable { showMenu = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "⚙️", fontSize = 16.sp)
+
                         DropdownMenu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
@@ -239,7 +203,7 @@ fun CharacterDetailScreen(
                                     val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                                         addCategory(Intent.CATEGORY_OPENABLE)
                                         type = "application/json"
-                                        putExtra(Intent.EXTRA_TITLE, "${char.name}.json")
+                                        putExtra(Intent.EXTRA_TITLE, "${character.name}.json")
                                     }
                                     exportLauncher.launch(intent)
                                 }
@@ -248,50 +212,10 @@ fun CharacterDetailScreen(
                     }
                 }
 
-                // ── Tabs ──────────────────────────────────────────────────
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color.Transparent,
-                    contentColor = accentColor,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = accentColor,
-                            height = 2.dp
-                        )
-                    },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            selectedContentColor = accentColor,
-                            unselectedContentColor = TextSecondary
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            ) {
-                                Icon(
-                                    tabIcons[index],
-                                    title,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(title, fontSize = 9.sp, letterSpacing = 0.5.sp)
-                            }
-                        }
-                    }
-                }
-
-                HorizontalDivider(color = BorderSubtle)
-
-                // ── Contenu de l'onglet ──────────────────────────────────
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (selectedTab) {
                         0 -> SheetTab(
-                            character = char,
+                            character = character,
                             viewModel = viewModel,
                             onImportPdf = {
                                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -302,17 +226,22 @@ fun CharacterDetailScreen(
                             },
                             pdfLauncher = pdfLauncher
                         )
-                        1 -> CountersTab(char, viewModel)
+
+                        1 -> CountersTab(character, viewModel)
                         2 -> AbilitiesTab(characterId, viewModel)
                         3 -> InventoryTab(characterId, viewModel)
                         4 -> NotesTab(notes = notesList, viewModel = viewModel)
                     }
                 }
             }
-        } ?: run {
-            // Loading
+        }
+    } ?: run {
+        // Loading
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
                 color = AccentPurple
             )
         }
@@ -336,6 +265,7 @@ fun CharacterDetailScreen(
         }
     }
 }
+
 
 // Extension nécessaire pour TabRow indicator
 private fun Modifier.tabIndicatorOffset(

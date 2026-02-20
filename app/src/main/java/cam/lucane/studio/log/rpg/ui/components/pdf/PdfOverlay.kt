@@ -1,5 +1,6 @@
 package cam.lucane.studio.log.rpg.ui.components.pdf
 
+import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,10 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.ui.theme.BackgroundDark
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 import dev.chrisbanes.haze.HazeState
@@ -45,8 +49,6 @@ fun PdfOverlay(
     modifier: Modifier = Modifier,
     mainColor: Color
 ) {
-    val hazeState = remember { HazeState() }
-
     Box(
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -60,13 +62,10 @@ fun PdfOverlay(
                 enabled = canGoPrevious,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = BackgroundDark.copy(alpha = 0.85f),
-                    disabledContainerColor = BackgroundDark.copy(alpha = 0.85f),
-                    contentColor = if (canGoPrevious) mainColor else mainColor.copy(alpha = 0.3f)
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    BorderSubtle
+                    containerColor = mainColor,
+                    disabledContainerColor = mainColor.copy(alpha = 0.4f),
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White.copy(alpha = 0.6f)
                 ),
                 modifier = Modifier.weight(1f)
             ) {
@@ -76,13 +75,20 @@ fun PdfOverlay(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Précédent", fontSize = 11.sp)
+                Text(
+                    "Précédent",
+                    fontSize = 12.sp,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
 
             Text(
                 text = "Page $currentPage / $totalPages",
-                fontSize = 11.sp,
-                color = TextSecondary,
+                fontSize = 12.sp,
+                color = ColorsSystem.TextSecondary,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = NunitoFontFamily,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
 
@@ -91,17 +97,19 @@ fun PdfOverlay(
                 enabled = canGoNext,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = BackgroundDark.copy(alpha = 0.85f),
-                    disabledContainerColor = BackgroundDark.copy(alpha = 0.85f),
-                    contentColor = if (canGoNext) mainColor else mainColor.copy(alpha = 0.3f)
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    BorderSubtle
+                    containerColor = mainColor,
+                    disabledContainerColor = mainColor.copy(alpha = 0.4f),
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White.copy(alpha = 0.6f)
                 ),
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Suivant", fontSize = 11.sp)
+                Text(
+                    "Suivant",
+                    fontSize = 12.sp,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     Icons.Default.ArrowForward,

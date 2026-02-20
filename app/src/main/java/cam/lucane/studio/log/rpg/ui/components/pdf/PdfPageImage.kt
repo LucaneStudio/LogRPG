@@ -40,9 +40,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.components.NotesRenderer
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.BackgroundDark
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 
 @Composable
@@ -55,7 +57,7 @@ fun PdfPageImage(
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    val buttonColor = BackgroundDark.copy(alpha = 0.85f)
+    val buttonColor = mainColor.copy(alpha = 0.4f)
     val buttonShape = RoundedCornerShape(10.dp)
     val buttonBorder = BorderStroke(1.dp, BorderSubtle)
 
@@ -120,35 +122,19 @@ fun PdfPageImage(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
 
-                // Badge numéro de page
                 Box(
                     modifier = Modifier
                         .background(color = buttonColor, shape = buttonShape)
                         .border(border = buttonBorder, shape = buttonShape),
                 ) {
                     Text(
-                        text = "$pageNumber",
+                        text = "${(scale * 100).toInt()}%",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        fontSize = 11.sp,
-                        color = mainColor,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontFamily = NunitoFontFamily,
+                        fontWeight = FontWeight.SemiBold
                     )
-                }
-                // Badge de zoom (si zoomé)
-                if (scale > 1f) {
-                    Box(
-                        modifier = Modifier
-                            .background(color = buttonColor, shape = buttonShape)
-                            .border(border = buttonBorder, shape = buttonShape),
-                    ) {
-                        Text(
-                            text = "${(scale * 100).toInt()}%",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            fontSize = 11.sp,
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
 
@@ -170,17 +156,12 @@ fun PdfPageImage(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        "Modifier",
-                        modifier = Modifier.size(14.dp),
-                        tint = mainColor
-                    )
                     Text(
-                        text = "Modifier",
-                        fontSize = 11.sp,
-                        color = mainColor,
-                        fontWeight = FontWeight.Medium
+                        text = "✏️ Modifier",
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontFamily = NunitoFontFamily,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
