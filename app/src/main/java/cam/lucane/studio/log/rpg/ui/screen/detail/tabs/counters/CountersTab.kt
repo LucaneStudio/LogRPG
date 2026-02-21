@@ -18,6 +18,6 @@ fun CountersTab(character: Character, viewModel: CharacterDetailViewModel) {
         item { HealthCard(character, viewModel) }
         item { ManaCard(character, viewModel) }
         item { CurrencyCard(character, viewModel) }
-        item { Spacer(modifier = Modifier.height(80.dp)) }
+        item { Spacer(modifier = Modifier.height(20.dp)) }
     }
 }

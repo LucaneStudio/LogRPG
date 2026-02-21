@@ -41,6 +41,7 @@ import cam.lucane.studio.log.rpg.data.entity.ManaMode
 import cam.lucane.studio.log.rpg.data.entity.SpellSlot
 import cam.lucane.studio.log.rpg.data.entity.getSpellSlots
 import cam.lucane.studio.log.rpg.ui.components.common.ProfileImage
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.screen.list.components.bar.HealthManaBar
 import cam.lucane.studio.log.rpg.ui.screen.list.components.bar.SpellSlotsBar
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
@@ -109,15 +110,16 @@ fun CharacterCard(
                         fontFamily = NunitoFontFamily
                     )
 
-                    IconButton(
+                    CardOptionButton(
+                        modifier = Modifier.size(26.dp),
                         onClick = onDelete,
-                        modifier = Modifier.size(20.dp),
+                        color = accentColor
                     ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            "Supprimer",
-                            tint = TextSecondary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(18.dp)
+                        Text(
+                            text = "🗑️",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily
                         )
                     }
                 }

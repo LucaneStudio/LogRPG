@@ -1,8 +1,10 @@
 package cam.lucane.studio.log.rpg.ui.components.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,29 +15,49 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 
 @Composable
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     placeholder: String,
+    mainColor: Color,
     modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            .height(48.dp),
-        placeholder = { Text(placeholder, color = TextSecondary, fontSize = 13.sp) },
+            .height(50.dp)
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 16.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            ),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontSize = 13.sp,
+                fontFamily = NunitoFontFamily,
+                color = ColorsSystem.TextSecondary
+            )
+        },
         leadingIcon = {
-            Icon(
-                Icons.Default.Search,
-                "Rechercher",
-                tint = TextSecondary,
-                modifier = Modifier.size(16.dp)
+            Text(
+                text = "\uD83D\uDD0D",
+                textAlign = TextAlign.Start,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = NunitoFontFamily,
             )
         },
         trailingIcon = {
@@ -54,15 +76,15 @@ fun SearchBar(
             }
         },
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = AccentPurple.copy(alpha = 0.6f),
-            unfocusedBorderColor = BorderSubtle,
-            focusedContainerColor = GlassSurface,
-            unfocusedContainerColor = GlassSurface,
-            cursorColor = AccentPurple
+            focusedBorderColor = mainColor,
+            unfocusedBorderColor = Color.Transparent,
+            focusedContainerColor = ColorsSystem.BackgroundCard,
+            unfocusedContainerColor = ColorsSystem.BackgroundCard,
+            cursorColor = mainColor
         ),
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp)
+        textStyle = TextStyle(fontSize = 13.sp, fontFamily = NunitoFontFamily, color = ColorsSystem.TextPrimary)
     )
 }
 
@@ -75,6 +97,10 @@ fun EmptySearchState(message: String, modifier: Modifier = Modifier) {
     ) {
         Text("🔍", fontSize = 48.sp)
         Spacer(modifier = Modifier.height(12.dp))
-        Text(message, fontSize = 15.sp, color = TextSecondary)
+        Text(
+            text = message,
+            fontSize = 15.sp, fontFamily = NunitoFontFamily,
+            color = ColorsSystem.TextSecondary
+        )
     }
 }

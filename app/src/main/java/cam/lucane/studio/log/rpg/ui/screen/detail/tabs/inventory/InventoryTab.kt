@@ -31,6 +31,7 @@ import cam.lucane.studio.log.rpg.ui.dialog.inventory.ItemDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
+import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlin.text.contains
 
@@ -60,6 +61,8 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
         result
     }
 
+    val mainColor = getAccentColorByCharacterId(characterId)
+
     Scaffold(
         containerColor = Color.Transparent,
         floatingActionButton = {
@@ -88,7 +91,8 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    placeholder = "Rechercher un objet..."
+                    placeholder = "Rechercher un objet...",
+                    mainColor = mainColor
                 )
                 // Filtres chips
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

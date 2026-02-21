@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -28,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,22 +47,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Ability
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.dialog.abilities.AbilityDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.GlassSurface
 import cam.lucane.studio.log.rpg.ui.theme.HealthRed
 import cam.lucane.studio.log.rpg.ui.theme.ManaBlue
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlin.text.contains
 
 @Composable
-fun AbilityCard(ability: Ability, viewModel: CharacterDetailViewModel) {
+fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -68,20 +74,25 @@ fun AbilityCard(ability: Ability, viewModel: CharacterDetailViewModel) {
     // Couleur par catégorie
     val categoryColor = remember(ability.category) {
         when {
-            ability.category?.contains("Combat", ignoreCase = true) == true -> AccentRed
-            ability.category?.contains("Magie", ignoreCase = true) == true -> ManaBlue
-            ability.category?.contains("Social", ignoreCase = true) == true -> AccentGold
-            ability.category?.contains("Passive", ignoreCase = true) == true -> AccentGreen
-            else -> AccentPurple
+            ability.category?.contains("Combat", ignoreCase = true) == true -> ColorsSystem.Red
+            ability.category?.contains("Magie", ignoreCase = true) == true -> ColorsSystem.Blue
+            ability.category?.contains("Social", ignoreCase = true) == true -> ColorsSystem.Yellow
+            ability.category?.contains("Passive", ignoreCase = true) == true -> ColorsSystem.Green
+            else -> ColorsSystem.Purple
         }
     }
 
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassSurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
         modifier = Modifier
             .fillMaxWidth()
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            )
             .clickable { expanded = !expanded }
     ) {
         Box {
@@ -106,58 +117,66 @@ fun AbilityCard(ability: Ability, viewModel: CharacterDetailViewModel) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = ability.name,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        // Badges catégorie + coût
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(top = 4.dp)
-                        ) {
-                            ability.category?.let {
-                                AbilityBadge(text = it, color = categoryColor)
-                            }
-                            ability.cost?.let {
-                                AbilityBadge(text = it, color = AccentGold)
-                            }
-                        }
-                    }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                modifier = Modifier.padding(start = 4.dp),
+                                text = ability.name,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = ColorsSystem.TextPrimary,
+                                fontFamily = NunitoFontFamily
+                            )
 
-                    // Boutons action
-                    Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-                        IconButton(
-                            onClick = { showEditDialog = true },
-                            modifier = Modifier.size(32.dp)
-                        ) {
+                            // Badges catégorie + coût
                             Icon(
-                                Icons.Default.Edit,
-                                "Modifier",
-                                tint = TextSecondary.copy(alpha = 0.6f),
-                                modifier = Modifier.size(16.dp)
+                                if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                "Détail",
+                                tint = TextSecondary.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .size(20.dp)
                             )
                         }
-                        IconButton(
-                            onClick = { showDeleteDialog = true },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                "Supprimer",
-                                tint = HealthRed.copy(alpha = 0.5f),
-                                modifier = Modifier.size(16.dp)
-                            )
+                        Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                ability.category?.let {
+                                    AbilityBadge(text = it, color = categoryColor)
+                                }
+                                ability.cost?.let {
+                                    AbilityBadge(text = it, color = AccentGold)
+                                }
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                CardOptionButton(
+                                    modifier = Modifier.size(26.dp),
+                                    onClick = { showEditDialog = true },
+                                    color = mainColor
+                                ) {
+                                    Text(
+                                        text = "✏️",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Black,
+                                        fontFamily = NunitoFontFamily
+                                    )
+                                }
+
+                                CardOptionButton(
+                                    modifier = Modifier.size(26.dp),
+                                    onClick = { showDeleteDialog = true },
+                                    color = mainColor
+                                ) {
+                                    Text(
+                                        text = "🗑️",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Black,
+                                        fontFamily = NunitoFontFamily
+                                    )
+                                }
+                            }
                         }
-                        Icon(
-                            if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            "Détail",
-                            tint = TextSecondary.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .size(20.dp)
-                                .align(Alignment.CenterVertically)
-                        )
+
                     }
                 }
 
@@ -171,12 +190,13 @@ fun AbilityCard(ability: Ability, viewModel: CharacterDetailViewModel) {
                         modifier = Modifier.padding(top = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        HorizontalDivider(color = BorderSubtle)
+                        HorizontalDivider(color = ColorsSystem.Divider)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = ability.description,
                             fontSize = 13.sp,
-                            color = TextSecondary,
+                            color = ColorsSystem.TextSecondary,
+                            fontFamily = NunitoFontFamily,
                             lineHeight = 19.sp
                         )
                         // Portée + durée
@@ -240,16 +260,16 @@ fun AbilityCard(ability: Ability, viewModel: CharacterDetailViewModel) {
 @Composable
 private fun AbilityBadge(text: String, color: Color) {
     Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = CircleShape,
         color = color.copy(alpha = 0.12f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.25f))
     ) {
         Text(
             text = text,
             fontSize = 10.sp,
             color = color,
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            fontFamily = NunitoFontFamily
         )
     }
 }
@@ -264,12 +284,14 @@ private fun AbilityDetailRow(icon: String, label: String, value: String) {
         Text(
             "$label : ",
             fontSize = 11.sp,
-            color = TextSecondary.copy(alpha = 0.6f)
+            fontFamily = NunitoFontFamily,
+            color = ColorsSystem.TextSecondary.copy(alpha = 0.7f)
         )
         Text(
             value,
             fontSize = 11.sp,
-            color = TextSecondary,
+            color = ColorsSystem.TextSecondary,
+            fontFamily = NunitoFontFamily,
             fontWeight = FontWeight.Medium
         )
     }
