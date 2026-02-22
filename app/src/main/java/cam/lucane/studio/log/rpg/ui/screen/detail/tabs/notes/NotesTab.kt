@@ -1,10 +1,12 @@
 package cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Notes
@@ -18,7 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Note
+import cam.lucane.studio.log.rpg.ui.components.common.EmptySearchState
 import cam.lucane.studio.log.rpg.ui.components.common.EmptyState
+import cam.lucane.studio.log.rpg.ui.components.common.SearchBar
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.FloatingDotButton
 import cam.lucane.studio.log.rpg.ui.dialog.notes.NoteDialog
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.components.NoteCard
 import cam.lucane.studio.log.rpg.ui.theme.*
@@ -28,6 +34,7 @@ enum class NotesMode { EDIT, RENDER }
 
 @Composable
 fun NotesTab(
+    mainColor: Color,
     notes: List<Note>,
     viewModel: CharacterDetailViewModel
 ) {
@@ -35,11 +42,44 @@ fun NotesTab(
     var showCreateDialog by remember { mutableStateOf(false) }
     var noteToRename by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
 
+    val filteredNotes = remember(notes, searchQuery) {
+        if (searchQuery.isBlank()) notes
+        else notes.filter {
+            it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.content.contains(searchQuery, ignoreCase = true)
+        }
+    }
     // Garder la note éditée à jour si elle change en base
     val updatedNote = editingNote?.let { editing -> notes.find { it.id == editing.id } }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Détecte si le DotButton (dernier item) est visible même partiellement
+    val isDotButtonVisible by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val totalItems = listState.layoutInfo.totalItemsCount
+            lastVisible?.index == totalItems - 1
+        }
+    }
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = !isDotButtonVisible,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(200))
+            ) {
+                FloatingDotButton(
+                    onClick = { showCreateDialog = true },
+                    dashColor = mainColor.copy(0.4f),
+                    labelColor = mainColor,
+                )
+            }
+        }
+    ) { padding ->
         AnimatedContent(
             targetState = editingNote,
             transitionSpec = {
@@ -59,99 +99,67 @@ fun NotesTab(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(AccentPurple.copy(alpha = 0.03f), Color.Transparent),
-                                radius = 800f
-                            )
-                        )
+                        .padding(padding)
+                        .padding(horizontal = 16.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // En-tête
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Notes,
-                                    contentDescription = null,
-                                    tint = AccentPurple,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    "NOTES (${notes.size})",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = 1.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                            Button(
-                                onClick = { showCreateDialog = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("Nouvelle note", fontSize = 13.sp)
-                            }
-                        }
+                        SearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            placeholder = "Rechercher une note...",
+                            mainColor = mainColor,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                        if (notes.isEmpty()) {
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                EmptyState(
-                                    emoji = "📝",
-                                    message = "Aucune note pour l'instant\nAppuie sur \"Nouvelle note\" pour commencer"
-                                )
-                            }
+                        if (filteredNotes.isEmpty()) {
+                            EmptySearchState(
+                                message = if (searchQuery.isBlank()) "Aucune Notes" else "Aucun résultat pour \"$searchQuery\"",
+                                modifier = Modifier.fillMaxSize()
+                            )
                         } else {
+
                             LazyColumn(
+                                state = listState,
                                 modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                contentPadding = PaddingValues(bottom = 80.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                items(notes, key = { it.id }) { note ->
+                                items(filteredNotes, key = { it.id }) { note ->
                                     NoteCard(
+                                        mainColor = mainColor,
                                         note = note,
                                         onClick = { editingNote = note },
                                         onRename = { noteToRename = note },
                                         onDelete = { noteToDelete = note }
                                     )
                                 }
+                                item { Spacer(modifier = Modifier.height(1.dp)) }
+                                item {
+                                    DotButton(
+                                        modifier = Modifier.fillMaxWidth(0.9f),
+                                        label = "＋ Créer une note",
+                                        dashColor = mainColor.copy(0.4f),
+                                        labelColor = mainColor,
+                                        onClick = { showCreateDialog = true }
+                                    )
+                                }
+                                item { Spacer(modifier = Modifier.height(1.dp)) }
                             }
                         }
                     }
-
-                    // FAB
-                    FloatingActionButton(
-                        onClick = { showCreateDialog = true },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp),
-                        containerColor = AccentPurple,
-                        contentColor = Color.White
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Nouvelle note")
-                    }
                 }
-
             } else {
                 // ── Vue éditeur ────────────────────────────────────────
                 NoteEditorScreen(
                     note = updatedNote ?: noteBeingEdited,
                     viewModel = viewModel,
-                    onBack = { editingNote = null }
+                    onBack = { editingNote = null },
+                    mainColor = mainColor
                 )
             }
         }

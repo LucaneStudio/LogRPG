@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -22,18 +24,20 @@ import cam.lucane.studio.log.rpg.data.entity.Note
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.components.NotesEditor
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.components.NotesRenderer
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlinx.coroutines.delay
+import java.nio.file.WatchEvent
 
 @Composable
 fun NoteEditorScreen(
     note: Note,
+    mainColor: Color,
     viewModel: CharacterDetailViewModel,
     onBack: () -> Unit
 ) {
     var content by remember(note.id) { mutableStateOf(note.content) }
     var lastSaved by remember(note.id) { mutableStateOf(note.content) }
-    var mode by remember { mutableStateOf(NotesMode.EDIT) }
 
     // Auto-save avec debounce 1s
     LaunchedEffect(content) {
@@ -47,13 +51,14 @@ fun NoteEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = 16.dp)
+            .background(ColorsSystem.BackgroundCard, shape = RoundedCornerShape(18.dp)),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // ── Barre du haut ──────────────────────────────────────────────
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -61,125 +66,74 @@ fun NoteEditorScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(onClick = {
-                    if (content != lastSaved) viewModel.updateNote(note.copy(content = content))
-                    onBack()
-                }) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Retour",
-                        tint = TextPrimary
-                    )
-                }
-                Column {
-                    Text(
-                        text = note.title,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "${content.length} car. · ${content.lines().size} lignes",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Toggle Edit / Preview
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = GlassSurface,
-                    border = BorderStroke(1.dp, BorderSubtle)
-                ) {
-                    Row {
-                        // Bouton Edit
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
-                                .background(
-                                    if (mode == NotesMode.EDIT) AccentPurple.copy(alpha = 0.15f)
-                                    else Color.Transparent
-                                )
-                                .clickable { mode = NotesMode.EDIT }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Code,
-                                    contentDescription = "Édition",
-                                    tint = if (mode == NotesMode.EDIT) AccentPurple else TextSecondary,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    "Edit",
-                                    fontSize = 11.sp,
-                                    fontWeight = if (mode == NotesMode.EDIT) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (mode == NotesMode.EDIT) AccentPurple else TextSecondary
-                                )
-                            }
-                        }
+                Icon(
+                    Icons.Default.ArrowBack,
+                    "Précédent",
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable{onBack.invoke()},
+                    tint = ColorsSystem.TextSecondary
+                )
 
-                        Box(modifier = Modifier.width(1.dp).height(28.dp).background(BorderSubtle))
-
-                        // Bouton Preview
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                                .background(
-                                    if (mode == NotesMode.RENDER) AccentPurple.copy(alpha = 0.15f)
-                                    else Color.Transparent
-                                )
-                                .clickable { mode = NotesMode.RENDER }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Preview,
-                                    contentDescription = "Aperçu",
-                                    tint = if (mode == NotesMode.RENDER) AccentPurple else TextSecondary,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    "Preview",
-                                    fontSize = 11.sp,
-                                    fontWeight = if (mode == NotesMode.RENDER) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (mode == NotesMode.RENDER) AccentPurple else TextSecondary
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Indicateur sauvegarde
                 Text(
-                    text = if (content == lastSaved) "✓" else "●",
+                    text = "\uD83D\uDCDD " + note.title,
                     fontSize = 16.sp,
-                    color = if (content == lastSaved) AccentGreen else AccentGold
+                    fontWeight = FontWeight.Black,
+                    color = ColorsSystem.TextPrimary,
+                    fontFamily = NunitoFontFamily
                 )
             }
+
+
+            // Indicateur sauvegarde
+            Text(
+                text = if (content == lastSaved) "✓" else "●",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (content == lastSaved) mainColor else ColorsSystem.Cyan,
+                fontFamily = NunitoFontFamily
+
+            )
         }
 
-        HorizontalDivider(color = BorderSubtle, thickness = 1.dp)
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = ColorsSystem.Divider,
+            thickness = 1.dp
+        )
 
         // ── Zone d'édition ─────────────────────────────────────────────
-        Box(modifier = Modifier.weight(1f)) {
-            when (mode) {
-                NotesMode.EDIT -> NotesEditor(notes = content, onNotesChange = { content = it })
-                NotesMode.RENDER -> NotesRenderer(markdown = content)
-            }
+        Box(modifier = Modifier.weight(1f).background(Color.Red)) {
+            NotesEditor(mainColor = mainColor, notes = content, onNotesChange = { content = it })
+        }
+
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = ColorsSystem.Divider,
+            thickness = 1.dp
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Text(
+                text = "${content.length} caractères",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = ColorsSystem.TextSecondary,
+                fontFamily = NunitoFontFamily
+            )
+
+            Text(
+                text = "${content.lines().size} lignes",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = ColorsSystem.TextSecondary,
+                fontFamily = NunitoFontFamily
+            )
         }
     }
 }

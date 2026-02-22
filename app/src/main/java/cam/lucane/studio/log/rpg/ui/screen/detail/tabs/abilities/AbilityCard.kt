@@ -84,7 +84,7 @@ fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailVi
 
     Card(
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
+        colors = CardDefaults.cardColors(contentColor = mainColor, containerColor = ColorsSystem.BackgroundCard),
         modifier = Modifier
             .fillMaxWidth()
             .coloredShadow(
@@ -93,6 +93,7 @@ fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailVi
                 blurRadius = 16.dp,
                 offsetY = 4.dp
             )
+            .clip(RoundedCornerShape(18.dp))
             .clickable { expanded = !expanded }
     ) {
         Box {

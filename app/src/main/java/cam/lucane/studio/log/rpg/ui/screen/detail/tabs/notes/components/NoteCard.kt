@@ -11,18 +11,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Note
+import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun NoteCard(
     note: Note,
+    mainColor: Color,
     onClick: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit
@@ -30,16 +35,24 @@ fun NoteCard(
     val dateFormat = SimpleDateFormat("dd MMM yyyy · HH:mm", Locale.FRENCH)
     val updatedDate = dateFormat.format(Date(note.updatedAt))
 
-    Surface(
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(contentColor = mainColor, containerColor = ColorsSystem.BackgroundCard),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        color = GlassSurface,
-        border = BorderStroke(1.dp, BorderSubtle)
+            .coloredShadow(
+                color = ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 22.dp,
+                blurRadius = 16.dp,
+                offsetY = 4.dp
+            )
+            .clip(RoundedCornerShape(18.dp))
+            .clickable { onClick.invoke() }
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
@@ -50,34 +63,38 @@ fun NoteCard(
                 Text(
                     text = note.title,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
+                    fontWeight = FontWeight.Black,
+                    color = ColorsSystem.TextPrimary,
+                    fontFamily = NunitoFontFamily,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row {
-                    IconButton(
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    CardOptionButton(
+                        modifier = Modifier.size(26.dp),
                         onClick = onRename,
-                        modifier = Modifier.size(32.dp)
+                        color = mainColor
                     ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Renommer",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(16.dp)
+                        Text(
+                            text = "✏️",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily
                         )
                     }
-                    IconButton(
+
+                    CardOptionButton(
+                        modifier = Modifier.size(26.dp),
                         onClick = onDelete,
-                        modifier = Modifier.size(32.dp)
+                        color = mainColor
                     ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Supprimer",
-                            tint = AccentRed.copy(alpha = 0.7f),
-                            modifier = Modifier.size(16.dp)
+                        Text(
+                            text = "🗑️",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = NunitoFontFamily
                         )
                     }
                 }
@@ -85,9 +102,11 @@ fun NoteCard(
 
             if (note.content.isNotBlank()) {
                 Text(
-                    text = note.content.lines().take(2).joinToString(" ").take(120),
+                    text = note.content,
                     fontSize = 13.sp,
-                    color = TextSecondary,
+                    color = ColorsSystem.TextSecondary,
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 18.sp
@@ -96,7 +115,9 @@ fun NoteCard(
                 Text(
                     text = "Note vide...",
                     fontSize = 13.sp,
-                    color = TextSecondary.copy(alpha = 0.5f)
+                    fontFamily = NunitoFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorsSystem.TextSecondary.copy(alpha = 0.5f)
                 )
             }
 
@@ -104,7 +125,9 @@ fun NoteCard(
                 text = "Modifiée le $updatedDate",
                 fontSize = 11.sp,
                 letterSpacing = 0.5.sp,
-                color = TextSecondary.copy(alpha = 0.5f)
+                fontWeight = FontWeight.SemiBold,
+                color = ColorsSystem.TextDisabled,
+                fontFamily = NunitoFontFamily,
             )
         }
     }

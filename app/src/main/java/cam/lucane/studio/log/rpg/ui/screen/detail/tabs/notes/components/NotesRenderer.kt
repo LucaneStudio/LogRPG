@@ -27,7 +27,6 @@ fun NotesRenderer(
     Surface(
         modifier = modifier.fillMaxSize(),
         shape = RoundedCornerShape(16.dp),
-        color = GlassSurface,
         border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
     ) {
         Box(

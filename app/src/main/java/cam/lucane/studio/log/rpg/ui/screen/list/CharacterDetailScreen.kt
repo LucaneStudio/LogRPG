@@ -222,7 +222,7 @@ fun CharacterDetailScreen(
                         1 -> CountersTab(character, viewModel)
                         2 -> AbilitiesTab(characterId, viewModel)
                         3 -> InventoryTab(characterId, viewModel)
-                        4 -> NotesTab(notes = notesList, viewModel = viewModel)
+                        4 -> NotesTab(mainColor = getAccentColorByCharacterId(characterId), notes = notesList, viewModel = viewModel)
                     }
                 }
             }

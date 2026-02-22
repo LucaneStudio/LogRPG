@@ -68,7 +68,7 @@ fun ItemCard(mainColor: Color, item: Item, viewModel: CharacterDetailViewModel) 
 
     Card(
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = ColorsSystem.BackgroundCard),
+        colors = CardDefaults.cardColors(contentColor = mainColor, containerColor = ColorsSystem.BackgroundCard),
         border = BorderStroke(
             1.dp,
             if (item.isEquipped) ColorsSystem.Green.copy(alpha = 0.4f) else Color.Transparent
@@ -81,6 +81,7 @@ fun ItemCard(mainColor: Color, item: Item, viewModel: CharacterDetailViewModel) 
                 blurRadius = 16.dp,
                 offsetY = 4.dp
             )
+            .clip(RoundedCornerShape(18.dp))
             .clickable { expanded = !expanded }
     ) {
         Box {
