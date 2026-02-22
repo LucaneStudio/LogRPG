@@ -267,7 +267,7 @@ private fun AbilityBadge(text: String, color: Color) {
             text = text,
             fontSize = 10.sp,
             color = color,
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
             fontWeight = FontWeight.Medium,
             fontFamily = NunitoFontFamily
         )

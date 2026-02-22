@@ -1,5 +1,7 @@
 package cam.lucane.studio.log.rpg.ui.components.common
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -11,7 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
+import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 
 @Composable
 fun FilterChip(
@@ -19,24 +24,26 @@ fun FilterChip(
     selected: Boolean,
     color: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(8.dp),
-        color = if (selected) color.copy(alpha = 0.15f) else Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) color.copy(alpha = 0.4f) else BorderSubtle
-        ),
-        modifier = modifier
-    ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) color else TextSecondary,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-        )
-    }
+    Text(
+        text = label,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.ExtraBold,
+        fontFamily = NunitoFontFamily,
+        color = if (selected) Color.White else ColorsSystem.TextDisabled,
+        modifier = Modifier
+            .coloredShadow(
+                color = if (selected) color.copy(.3f) else ColorsSystem.Shadow.copy(0.08f),
+                borderRadius = 99.dp,
+                blurRadius = if (selected) 12.dp else 8.dp,
+                offsetY = 2.dp
+            )
+            .background(
+                color = if (selected) color else ColorsSystem.BackgroundCard,
+                shape = RoundedCornerShape(99.dp)
+            )
+            .clickable { onClick.invoke() }
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        letterSpacing = 0.3.sp
+    )
 }

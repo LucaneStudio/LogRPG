@@ -103,14 +103,6 @@ fun CharacterDetailScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
     val notesList by viewModel.notes.collectAsState()
-    val tabs = listOf("FICHE", "COMPT.", "SORTS", "INV.", "NOTES")
-    val tabIcons = listOf(
-        Icons.Default.Description,
-        Icons.Default.Favorite,
-        Icons.Default.AutoAwesome,
-        Icons.Default.Backpack,
-        Icons.Default.Notes
-    )
 
     character?.let { character ->
         // Export launcher

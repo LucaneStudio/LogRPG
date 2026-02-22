@@ -37,12 +37,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.ui.components.common.FilterChip
 import cam.lucane.studio.log.rpg.ui.components.common.ProfileImage
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.inventory.ItemFilter
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
 import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
+import kotlin.collections.count
 
 @Composable
 fun CharacterDetailHeader(
@@ -121,26 +124,12 @@ fun CharacterDetailHeader(
         ) {
             itemsIndexed(tabs) { index, label ->
                 val isActive = selectedTab == index
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontFamily = NunitoFontFamily,
-                    color = if (isActive) Color.White else ColorsSystem.TextDisabled,
-                    modifier = Modifier
-                        .coloredShadow(
-                            color = if (isActive) accentColor.copy(.3f) else ColorsSystem.Shadow.copy(0.08f),
-                            borderRadius = 99.dp,
-                            blurRadius = if (isActive) 12.dp else 8.dp,
-                            offsetY = 2.dp
-                        )
-                        .background(
-                            color = if (isActive) accentColor else ColorsSystem.BackgroundCard,
-                            shape = RoundedCornerShape(99.dp)
-                        )
-                        .clickable { onTabSelected(index) }
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
-                    letterSpacing = 0.3.sp
+
+                FilterChip(
+                    label = label,
+                    selected = isActive,
+                    color = accentColor,
+                    onClick = { onTabSelected(index) }
                 )
             }
         }
