@@ -76,7 +76,9 @@ fun ManaCard(character: Character, viewModel: CharacterDetailViewModel) {
             onConfirm = { newMax ->
                 viewModel.updateMana(character.currentMana, newMax)
                 showEditMaxDialog = false
-            }
+            },
+            emoji = "💧",
+            accentColor = ColorsSystem.Blue,
         )
     }
 }

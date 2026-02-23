@@ -30,8 +30,10 @@ fun SearchBar(
     onQueryChange: (String) -> Unit,
     placeholder: String,
     mainColor: Color,
+    haveBorder: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -79,7 +81,7 @@ fun SearchBar(
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = mainColor,
-            unfocusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = if(haveBorder) ColorsSystem.Divider else Color.Transparent,
             focusedContainerColor = ColorsSystem.BackgroundCard,
             unfocusedContainerColor = ColorsSystem.BackgroundCard,
             cursorColor = mainColor

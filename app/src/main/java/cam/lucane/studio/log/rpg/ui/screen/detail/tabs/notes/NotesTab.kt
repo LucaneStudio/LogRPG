@@ -25,6 +25,7 @@ import cam.lucane.studio.log.rpg.ui.components.common.EmptyState
 import cam.lucane.studio.log.rpg.ui.components.common.SearchBar
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.FloatingDotButton
+import cam.lucane.studio.log.rpg.ui.dialog.common.DeleteNoteDialog
 import cam.lucane.studio.log.rpg.ui.dialog.notes.NoteDialog
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.notes.components.NoteCard
 import cam.lucane.studio.log.rpg.ui.theme.*
@@ -35,6 +36,7 @@ enum class NotesMode { EDIT, RENDER }
 @Composable
 fun NotesTab(
     mainColor: Color,
+    mainBrush: Brush,
     notes: List<Note>,
     viewModel: CharacterDetailViewModel
 ) {
@@ -174,7 +176,9 @@ fun NotesTab(
                 }
                 showCreateDialog = false
             },
-            onDismiss = { showCreateDialog = false }
+            onDismiss = { showCreateDialog = false },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 
@@ -186,30 +190,19 @@ fun NotesTab(
                 viewModel.updateNote(note.copy(title = newTitle))
                 noteToRename = null
             },
-            onDismiss = { noteToRename = null }
+            onDismiss = { noteToRename = null },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 
     // ── Dialogue suppression ───────────────────────────────────────────
     noteToDelete?.let { note ->
-        AlertDialog(
-            onDismissRequest = { noteToDelete = null },
-            title = { Text("Supprimer la note ?", color = TextPrimary) },
-            text = { Text("\"${note.title}\" sera supprimée définitivement.", color = TextSecondary) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteNote(note)
-                    noteToDelete = null
-                }) {
-                    Text("Supprimer", color = AccentRed)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { noteToDelete = null }) {
-                    Text("Annuler", color = TextSecondary)
-                }
-            },
-            containerColor = SurfaceDark
+        DeleteNoteDialog(
+            noteTitle = note.title,
+            onDismiss = { noteToDelete = null },
+            onConfirm = { viewModel.deleteNote(note)
+                noteToDelete = null }
         )
     }
 }

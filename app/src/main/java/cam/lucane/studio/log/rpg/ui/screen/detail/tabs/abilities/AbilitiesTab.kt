@@ -40,6 +40,7 @@ import cam.lucane.studio.log.rpg.ui.components.common.buttons.FloatingDotButton
 import cam.lucane.studio.log.rpg.ui.dialog.abilities.AbilityDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
 import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlin.text.contains
@@ -61,6 +62,7 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
     }
 
     val mainColor = getAccentColorByCharacterId(characterId)
+    val mainBrush = getAccentBrushByCharacterId(characterId)
 
     // Détecte si le DotButton (dernier item) est visible même partiellement
     val isDotButtonVisible by remember {
@@ -102,7 +104,7 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                 placeholder = "Rechercher une capacité...",
                 modifier = Modifier
                     .fillMaxWidth(),
-                mainColor = mainColor
+                mainColor = mainColor,
             )
 
             if (filteredAbilities.isEmpty()) {
@@ -117,7 +119,7 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(filteredAbilities, key = { it.id }) { ability ->
-                        AbilityCard(mainColor, ability, viewModel)
+                        AbilityCard(mainColor, mainBrush, ability, viewModel)
                     }
                     item { Spacer(modifier = Modifier.height(1.dp)) }
                     item {
@@ -151,7 +153,9 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                     )
                 )
                 showAddDialog = false
-            }
+            },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 }

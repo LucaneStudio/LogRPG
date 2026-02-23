@@ -2,82 +2,86 @@ package cam.lucane.studio.log.rpg.ui.dialog.notes
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import cam.lucane.studio.log.rpg.data.entity.Note
-import cam.lucane.studio.log.rpg.ui.theme.*
+import cam.lucane.studio.log.rpg.ui.dialog.common.BaseBottomSheet
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetButtonRow
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetLabel
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 
 @Composable
 fun NoteDialog(
-    note: Note? = null,   // null = création, non-null = renommage
+    note: Note? = null,    // null = création, non-null = renommage
+    mainColor: Color,
     onConfirm: (title: String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    mainBrush: Brush,
 ) {
     val isEdit = note != null
     var title by remember { mutableStateOf(note?.title ?: "") }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = SurfaceDark,
-            tonalElevation = 8.dp
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+    BaseBottomSheet(
+        onDismiss = onDismiss,
+        title = if (isEdit) "Renommer la note" else "📝 Nouvelle note"
+    ) {
+        SheetLabel(text = "TITRE DE LA NOTE")
+        Spacer(Modifier.height(6.dp))
+
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
                 Text(
-                    text = if (isEdit) "Renommer la note" else "Nouvelle note",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    "Ex : Session du 12 mars, Lore du monde…",
+                    fontFamily = NunitoFontFamily,
+                    fontSize = 13.sp,
+                    color = ColorsSystem.TextDisabled
                 )
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (title.isNotBlank()) onConfirm(title.trim())
+            }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ColorsSystem.Purple,
+                unfocusedBorderColor = ColorsSystem.Divider,
+                focusedContainerColor = ColorsSystem.BackgroundCard,
+                unfocusedContainerColor = ColorsSystem.BackgroundCard,
+                cursorColor = mainColor
+            ),
+            textStyle = TextStyle(
+                fontFamily = NunitoFontFamily,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = ColorsSystem.TextPrimary
+            )
+        )
 
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    placeholder = { Text("Titre de la note", color = TextSecondary) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AccentPurple,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedContainerColor = GlassSurface,
-                        unfocusedContainerColor = GlassSurface,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentPurple
-                    )
-                )
+        Spacer(Modifier.height(24.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Annuler", color = TextSecondary)
-                    }
-                    Button(
-                        onClick = { if (title.isNotBlank()) onConfirm(title.trim()) },
-                        enabled = title.isNotBlank(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
-                    ) {
-                        Text(
-                            text = if (isEdit) "Renommer" else "Créer",
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-        }
+        SheetButtonRow(
+            onDismiss = onDismiss,
+            onConfirm = { if (title.isNotBlank()) onConfirm(title.trim()) },
+            confirmEnabled = title.isNotBlank(),
+            confirmLabel = if (isEdit) "Renommer" else "Créer",
+            confirmBrush = mainBrush
+        )
     }
 }

@@ -27,6 +27,7 @@ import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
 import cam.lucane.studio.log.rpg.ui.components.common.header.HomeHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.CreateCharacterDialog
+import cam.lucane.studio.log.rpg.ui.dialog.character.DeleteCharacterDialog
 import cam.lucane.studio.log.rpg.ui.screen.list.components.CharacterCard
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterListViewModel
@@ -102,7 +103,9 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
                 ) {
                     item{
                         Text(
-                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp),
                             text = "MES PERSONNAGES",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Black,
@@ -148,24 +151,15 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
     }
 
     showDeleteDialog?.let { character ->
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Supprimer ${character.name} ?") },
-            text = { Text("Cette action est irréversible. Toutes les données seront perdues.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteCharacter(character)
-                        showDeleteDialog = null
-                    }
-                ) {
-                    Text("Supprimer", color = HealthRed)
-                }
+
+        DeleteCharacterDialog(
+            character = character,
+            onConfirm = {
+                viewModel.deleteCharacter(character)
+                showDeleteDialog = null
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Annuler")
-                }
+            onDismiss = {
+                showDeleteDialog = null
             }
         )
     }

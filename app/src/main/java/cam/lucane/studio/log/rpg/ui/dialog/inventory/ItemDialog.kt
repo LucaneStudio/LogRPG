@@ -1,133 +1,148 @@
 package cam.lucane.studio.log.rpg.ui.dialog.inventory
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Item
-import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
-import cam.lucane.studio.log.rpg.ui.theme.AccentRed
-import cam.lucane.studio.log.rpg.ui.theme.BorderSubtle
-import cam.lucane.studio.log.rpg.ui.theme.TextPrimary
+import cam.lucane.studio.log.rpg.ui.dialog.common.BaseBottomSheet
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetButtonRow
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetDivider
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetLabel
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 
 @Composable
 fun ItemDialog(
     title: String,
+    mainColor: Color,
+    mainBrush: Brush,
     initialItem: Item? = null,
     onDismiss: () -> Unit,
     onConfirm: (Item) -> Unit
 ) {
-    var name by remember { mutableStateOf(initialItem?.name ?: "") }
+    var name        by remember { mutableStateOf(initialItem?.name ?: "") }
     var description by remember { mutableStateOf(initialItem?.description ?: "") }
-    var quantity by remember { mutableStateOf((initialItem?.quantity ?: 1).toString()) }
-    var weight by remember { mutableStateOf(initialItem?.weight ?: "") }
-    var category by remember { mutableStateOf(initialItem?.category ?: "") }
-    var notes by remember { mutableStateOf(initialItem?.notes ?: "") }
+    var quantity    by remember { mutableStateOf((initialItem?.quantity ?: 1).toString()) }
+    var weight      by remember { mutableStateOf(initialItem?.weight ?: "") }
+    var category    by remember { mutableStateOf(initialItem?.category ?: "") }
+    var notes       by remember { mutableStateOf(initialItem?.notes ?: "") }
     var isConsumable by remember { mutableStateOf(initialItem?.isConsumable ?: false) }
-    var isEquipped by remember { mutableStateOf(initialItem?.isEquipped ?: false) }
+    var isEquipped  by remember { mutableStateOf(initialItem?.isEquipped ?: false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it },
-                    label = { Text("Nom *") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = description, onValueChange = { description = it },
-                    label = { Text("Description *") },
-                    minLines = 2, maxLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = quantity, onValueChange = { quantity = it },
-                        label = { Text("Quantité") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
+    @Composable
+    fun Field(label: String, value: String, onChange: (String) -> Unit, placeholder: String = "", minLines: Int = 1, keyboard: KeyboardType = KeyboardType.Text, modifier: Modifier = Modifier.fillMaxWidth()) {
+
+        Column(modifier) {
+            SheetLabel(text = label)
+            Spacer(Modifier.height(2.dp))
+            OutlinedTextField(
+                value = value,
+                onValueChange = onChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(
+                        placeholder,
+                        fontFamily = NunitoFontFamily,
+                        fontSize = 13.sp,
+                        color = ColorsSystem.TextDisabled
                     )
-                    OutlinedTextField(
-                        value = weight, onValueChange = { weight = it },
-                        label = { Text("Poids") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                OutlinedTextField(
-                    value = category, onValueChange = { category = it },
-                    label = { Text("Catégorie") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                },
+                singleLine = minLines == 1,
+                minLines = minLines,
+                maxLines = if (minLines > 1) 4 else 1,
+                shape = RoundedCornerShape(12.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = mainColor,
+                    unfocusedBorderColor = ColorsSystem.Divider,
+                    focusedContainerColor = ColorsSystem.BackgroundCard,
+                    unfocusedContainerColor = ColorsSystem.BackgroundCard,
+                    cursorColor = mainColor
+                ),
+                textStyle = TextStyle(
+                    fontFamily = NunitoFontFamily,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorsSystem.TextPrimary
                 )
-                OutlinedTextField(
-                    value = notes, onValueChange = { notes = it },
-                    label = { Text("Notes") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                HorizontalDivider(color = BorderSubtle)
-                // Switches
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Consommable", fontSize = 14.sp, color = TextPrimary)
-                    Switch(
-                        checked = isConsumable,
-                        onCheckedChange = { isConsumable = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = AccentRed, checkedTrackColor = AccentRed.copy(alpha = 0.3f))
-                    )
-                }
-                if (!isConsumable) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Équipé", fontSize = 14.sp, color = TextPrimary)
-                        Switch(
-                            checked = isEquipped,
-                            onCheckedChange = { isEquipped = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = AccentGreen, checkedTrackColor = AccentGreen.copy(alpha = 0.3f))
-                        )
-                    }
-                }
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+    }
+
+    BaseBottomSheet(onDismiss = onDismiss, title = title) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+
+            Field("NOM *", name, { name = it }, "Épée longue, Potion…")
+            Field("DESCRIPTION *", description, { description = it }, "Effets, origine, histoire…", minLines = 2)
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Field("QUANTITÉ", quantity, { quantity = it }, "1", keyboard = KeyboardType.Number, modifier = Modifier.weight(1f))
+                Field("POIDS", weight, { weight = it }, "1 kg", modifier = Modifier.weight(1f))
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Field("CATÉGORIE", category, { category = it }, "Arme, Armure…", modifier = Modifier.weight(1f))
+                Field("NOTES", notes, { notes = it }, "Optionnel", modifier = Modifier.weight(1f))
+            }
+
+            SheetDivider()
+            Spacer(Modifier.height(12.dp))
+
+            // Toggle Consommable
+            ToggleRow(
+                label = "🧪 Consommable",
+                desc = "L'objet est utilisable et a une quantité",
+                checked = isConsumable,
+                activeColor = ColorsSystem.Red,
+                onToggle = {
+                    isConsumable = it
+                    if (it) isEquipped = false
+                }
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            // Toggle Équipé (masqué si consommable)
+            if (!isConsumable) {
+                ToggleRow(
+                    label = "⚔️ Équipé",
+                    desc = "L'objet est actuellement porté",
+                    checked = isEquipped,
+                    activeColor = ColorsSystem.Green,
+                    onToggle = { isEquipped = it }
+                )
+                Spacer(Modifier.height(6.dp))
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            SheetButtonRow(
+                onDismiss = onDismiss,
+                onConfirm = {
                     onConfirm(
                         (initialItem ?: Item(characterId = 0, name = "", description = "")).copy(
-                            name = name,
-                            description = description,
+                            name = name.trim(),
+                            description = description.trim(),
                             quantity = quantity.toIntOrNull() ?: 1,
                             weight = weight.ifBlank { null },
                             category = category.ifBlank { null },
@@ -137,13 +152,57 @@ fun ItemDialog(
                         )
                     )
                 },
-                enabled = name.isNotBlank() && description.isNotBlank()
-            ) {
-                Text(if (initialItem == null) "Ajouter" else "Enregistrer")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
+                confirmEnabled = name.isNotBlank() && description.isNotBlank(),
+                confirmLabel = if (initialItem == null) "Ajouter" else "Enregistrer",
+                confirmBrush = mainBrush,
+            )
         }
-    )
+    }
+}
+
+@Composable
+private fun ToggleRow(
+    label: String,
+    desc: String,
+    checked: Boolean,
+    activeColor: androidx.compose.ui.graphics.Color,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (checked) activeColor.copy(.07f) else ColorsSystem.BackgroundSurface)
+            .border(
+                1.5.dp,
+                if (checked) activeColor.copy(.25f) else ColorsSystem.Divider,
+                RoundedCornerShape(14.dp)
+            )
+            .clickable { onToggle(!checked) }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, fontFamily = NunitoFontFamily, color = ColorsSystem.TextPrimary)
+            Text(desc, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, fontFamily = NunitoFontFamily, color = ColorsSystem.TextDisabled)
+        }
+        // Pill toggle
+        Box(
+            modifier = Modifier
+                .width(46.dp)
+                .height(26.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(if (checked) activeColor else ColorsSystem.Divider),
+            contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(3.dp)
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color.White)
+            )
+        }
+    }
 }

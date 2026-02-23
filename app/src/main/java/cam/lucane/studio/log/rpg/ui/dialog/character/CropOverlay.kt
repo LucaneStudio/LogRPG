@@ -22,18 +22,6 @@ fun CropOverlay(modifier: Modifier = Modifier) {
         val top = (size.height - boxSize) / 2f
         val cornerRadius = boxSize * 0.12f
 
-        val cropRect = Rect(Offset(left, top), Size(boxSize, boxSize))
-
-        // Fond sombre avec trou carré arrondi
-        drawPath(
-            path = Path().apply {
-                addRect(Rect(Offset.Zero, size))
-                addRoundRect(RoundRect(cropRect, CornerRadius(cornerRadius)))
-            },
-            color = Color.Black.copy(alpha = 0.6f),
-            style = Fill
-        )
-
         // Bordure du carré arrondi
         drawRoundRect(
             color = Color.White.copy(alpha = 0.9f),

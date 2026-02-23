@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Item
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
+import cam.lucane.studio.log.rpg.ui.dialog.common.DeleteItemDialog
 import cam.lucane.studio.log.rpg.ui.dialog.inventory.ItemDialog
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
@@ -55,7 +57,7 @@ import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 
 @Composable
-fun ItemCard(mainColor: Color, item: Item, viewModel: CharacterDetailViewModel) {
+fun ItemCard(mainColor: Color, mainBrush: Brush, item: Item, viewModel: CharacterDetailViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -284,18 +286,10 @@ fun ItemCard(mainColor: Color, item: Item, viewModel: CharacterDetailViewModel) 
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Supprimer ${item.name} ?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteItem(item)
-                    showDeleteDialog = false
-                }) { Text("Supprimer", color = ColorsSystem.Red) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler") }
-            }
+        DeleteItemDialog(
+            itemName = item.name,
+            onDismiss = { showDeleteDialog = false },
+            onConfirm = { viewModel.deleteItem(item); showDeleteDialog = false }
         )
     }
 
@@ -307,7 +301,9 @@ fun ItemCard(mainColor: Color, item: Item, viewModel: CharacterDetailViewModel) 
             onConfirm = { updated ->
                 viewModel.updateItem(updated)
                 showEditDialog = false
-            }
+            },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 }

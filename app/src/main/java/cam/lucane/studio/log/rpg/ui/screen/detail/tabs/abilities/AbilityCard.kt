@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.data.entity.Ability
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.dialog.abilities.AbilityDialog
+import cam.lucane.studio.log.rpg.ui.dialog.common.DeleteAbilityDialog
 import cam.lucane.studio.log.rpg.ui.theme.AccentGold
 import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
@@ -66,7 +67,7 @@ import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlin.text.contains
 
 @Composable
-fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailViewModel) {
+fun AbilityCard(mainColor: Color,mainBrush: Brush, ability: Ability, viewModel: CharacterDetailViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -216,18 +217,10 @@ fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailVi
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Supprimer ${ability.name} ?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteAbility(ability)
-                    showDeleteDialog = false
-                }) { Text("Supprimer", color = HealthRed) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler") }
-            }
+        DeleteAbilityDialog(
+            abilityName = ability.name,
+            onDismiss = { showDeleteDialog = false },
+            onConfirm = { viewModel.deleteAbility(ability); showDeleteDialog = false }
         )
     }
 
@@ -253,7 +246,9 @@ fun AbilityCard(mainColor: Color, ability: Ability, viewModel: CharacterDetailVi
                     )
                 )
                 showEditDialog = false
-            }
+            },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 }

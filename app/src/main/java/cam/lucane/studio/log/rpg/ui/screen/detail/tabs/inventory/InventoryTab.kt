@@ -43,6 +43,7 @@ import cam.lucane.studio.log.rpg.ui.theme.AccentGreen
 import cam.lucane.studio.log.rpg.ui.theme.AccentPurple
 import cam.lucane.studio.log.rpg.ui.theme.AccentRed
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
 import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlin.text.contains
@@ -84,6 +85,8 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
     }
 
     val mainColor = getAccentColorByCharacterId(characterId)
+    val mainBrush = getAccentBrushByCharacterId(characterId)
+
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -119,7 +122,7 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
                     placeholder = "Rechercher un objet...",
-                    mainColor = mainColor
+                    mainColor = mainColor,
                 )
                 // Filtres chips
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -162,7 +165,7 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(filteredItems, key = { it.id }) { item ->
-                        ItemCard(mainColor, item, viewModel)
+                        ItemCard(mainColor,mainBrush, item, viewModel)
                     }
                     item { Spacer(modifier = Modifier.height(1.dp)) }
                     item {
@@ -187,7 +190,9 @@ fun InventoryTab(characterId: Long, viewModel: CharacterDetailViewModel) {
             onConfirm = { item ->
                 viewModel.addItem(item.copy(characterId = characterId))
                 showAddDialog = false
-            }
+            },
+            mainColor = mainColor,
+            mainBrush = mainBrush
         )
     }
 }

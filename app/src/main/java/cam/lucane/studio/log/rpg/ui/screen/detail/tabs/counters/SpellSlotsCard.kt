@@ -30,6 +30,7 @@ import cam.lucane.studio.log.rpg.ui.dialog.counters.SpellSlotLevelDialog
 import cam.lucane.studio.log.rpg.ui.dialog.counters.SpellSlotsConfigDialog
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
+import cam.lucane.studio.log.rpg.ui.utils.getAccentBrushByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import kotlinx.coroutines.launch
 
@@ -42,6 +43,7 @@ fun SpellSlotsCard(
     val slots = character.getSpellSlots()
     var showConfigDialog by remember { mutableStateOf(false) }
     var editingSlot by remember { mutableStateOf<SpellSlot?>(null) }
+    val mainBrush = getAccentBrushByCharacterId(character.id)
 
     Card(
         shape = RoundedCornerShape(18.dp),
@@ -188,6 +190,7 @@ fun SpellSlotsCard(
         SpellSlotsConfigDialog(
             slots = slots,
             onDismiss = { showConfigDialog = false },
+            mainBrush = mainBrush,
             onConfirm = { updated ->
                 viewModel.updateSpellSlots(updated)
                 showConfigDialog = false
@@ -206,7 +209,8 @@ fun SpellSlotsCard(
                 )
                 viewModel.updateSpellSlots(updated)
                 editingSlot = null
-            }
+            },
+            mainBrush = mainBrush
         )
     }
 }

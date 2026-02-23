@@ -61,6 +61,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cam.lucane.studio.log.rpg.ui.components.common.CharacterSettingsDropdown
+import cam.lucane.studio.log.rpg.ui.components.common.DropdownAction
 import cam.lucane.studio.log.rpg.ui.components.common.header.CharacterDetailHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.ProfileImagePicker
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.abilities.AbilitiesTab
@@ -172,25 +174,12 @@ fun CharacterDetailScreen(
                     ) {
                         Text(text = "⚙️", fontSize = 16.sp)
 
-                        DropdownMenu(
+                        CharacterSettingsDropdown(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            // ✅ NOUVEAU : Changer la photo
-                            DropdownMenuItem(
-                                text = { Text("Changer la photo") },
-                                leadingIcon = { Icon(Icons.Default.CameraAlt, null) },
-                                onClick = {
-                                    showMenu = false
-                                    showImagePicker = true
-                                }
-                            )
-
-                            // Exporter en JSON
-                            DropdownMenuItem(
-                                text = { Text("Exporter en JSON") },
-                                leadingIcon = { Icon(Icons.Default.Upload, null) },
-                                onClick = {
+                            onDismiss = { showMenu = false },
+                            actions = listOf(
+                                DropdownAction("📷", "Changer la photo") { showImagePicker = true },
+                                DropdownAction("📤", "Exporter en JSON") {
                                     showMenu = false
                                     val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                                         addCategory(Intent.CATEGORY_OPENABLE)
@@ -198,9 +187,10 @@ fun CharacterDetailScreen(
                                         putExtra(Intent.EXTRA_TITLE, "${character.name}.json")
                                     }
                                     exportLauncher.launch(intent)
-                                }
+                                },
+                                //DropdownAction("🗑", "Supprimer", isDanger = true) { showDeleteDialog = true }
                             )
-                        }
+                        )
                     }
                 }
 
@@ -222,7 +212,12 @@ fun CharacterDetailScreen(
                         1 -> CountersTab(character, viewModel)
                         2 -> AbilitiesTab(characterId, viewModel)
                         3 -> InventoryTab(characterId, viewModel)
-                        4 -> NotesTab(mainColor = getAccentColorByCharacterId(characterId), notes = notesList, viewModel = viewModel)
+                        4 -> NotesTab(
+                            mainColor = getAccentColorByCharacterId(characterId),
+                            mainBrush = getAccentBrushByCharacterId(characterId),
+                            notes = notesList,
+                            viewModel = viewModel
+                        )
                     }
                 }
             }
@@ -245,6 +240,8 @@ fun CharacterDetailScreen(
             ProfileImagePicker(
                 currentImageUri = char.profileImagePath?.let { Uri.fromFile(File(it)) },
                 onDismiss = { showImagePicker = false },
+                mainBrush = getAccentBrushByCharacterId(char.id),
+                characterName = char.name,
                 onImageSelected = { uri ->
                     if (uri != null) {
                         viewModel.updateProfileImage(uri)

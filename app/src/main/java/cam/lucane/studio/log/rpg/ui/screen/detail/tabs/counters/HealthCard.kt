@@ -45,7 +45,9 @@ fun HealthCard(character: Character, viewModel: CharacterDetailViewModel) {
             onConfirm = { newMax ->
                 viewModel.updateHealth(character.currentHealth, newMax)
                 showEditMaxDialog = false
-            }
+            },
+            emoji = "❤️",
+            accentColor = ColorsSystem.Red
         )
     }
 }

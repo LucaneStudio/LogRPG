@@ -1,20 +1,25 @@
 package cam.lucane.studio.log.rpg.ui.dialog.abilities
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.dialog.common.BaseBottomSheet
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetButtonRow
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetLabel
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 
 @Composable
 fun AbilityDialog(
@@ -26,75 +31,88 @@ fun AbilityDialog(
     initialDuration: String = "",
     initialCategory: String = "",
     onDismiss: () -> Unit,
+    mainColor: Color,
+    mainBrush: Brush,
     onConfirm: (String, String, String, String, String, String) -> Unit
 ) {
-    var name by remember { mutableStateOf(initialName) }
-    var desc by remember { mutableStateOf(initialDesc) }
-    var cost by remember { mutableStateOf(initialCost) }
-    var range by remember { mutableStateOf(initialRange) }
+    var name     by remember { mutableStateOf(initialName) }
+    var desc     by remember { mutableStateOf(initialDesc) }
+    var cost     by remember { mutableStateOf(initialCost) }
+    var range    by remember { mutableStateOf(initialRange) }
     var duration by remember { mutableStateOf(initialDuration) }
     var category by remember { mutableStateOf(initialCategory) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it },
-                    label = { Text("Nom *") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+    @Composable
+    fun Field(
+        label: String,
+        value: String,
+        onChange: (String) -> Unit,
+        placeholder: String = "",
+        minLines: Int = 1,
+        modifier: Modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier) {
+            SheetLabel(text = label)
+            Spacer(Modifier.height(2.dp))
+            OutlinedTextField(
+                value = value,
+                onValueChange = onChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(
+                        placeholder,
+                        fontFamily = NunitoFontFamily,
+                        fontSize = 13.sp,
+                        color = ColorsSystem.TextDisabled
+                    )
+                },
+                singleLine = minLines == 1,
+                minLines = minLines,
+                maxLines = if (minLines > 1) 4 else 1,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = mainColor,
+                    unfocusedBorderColor = ColorsSystem.Divider,
+                    focusedContainerColor = ColorsSystem.BackgroundCard,
+                    unfocusedContainerColor = ColorsSystem.BackgroundCard,
+                    cursorColor = mainColor
+                ),
+                textStyle = TextStyle(
+                    fontFamily = NunitoFontFamily,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorsSystem.TextPrimary
                 )
-                OutlinedTextField(
-                    value = desc, onValueChange = { desc = it },
-                    label = { Text("Description *") },
-                    minLines = 2, maxLines = 4,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = cost, onValueChange = { cost = it },
-                        label = { Text("Coût") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = range, onValueChange = { range = it },
-                        label = { Text("Portée") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = duration, onValueChange = { duration = it },
-                        label = { Text("Durée") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = category, onValueChange = { category = it },
-                        label = { Text("Catégorie") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(name, desc, cost, range, duration, category) },
-                enabled = name.isNotBlank() && desc.isNotBlank()
-            ) {
-                Text(if (initialName.isEmpty()) "Ajouter" else "Enregistrer")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
+            )
+            Spacer(Modifier.height(10.dp))
         }
-    )
+    }
+
+    BaseBottomSheet(onDismiss = onDismiss, title = title) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+
+            Field("NOM *", name, { name = it }, "Boule de feu, Téléportation…")
+            Field("DESCRIPTION *", desc, { desc = it }, "Effets, conditions, règles…", minLines = 3)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Field("COÛT", cost, { cost = it }, "3 mana", modifier = Modifier.weight(1f))
+                Field("PORTÉE", range, { range = it }, "36 m", modifier = Modifier.weight(1f))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Field("DURÉE", duration, { duration = it }, "1 action", modifier = Modifier.weight(1f))
+                Field("CATÉGORIE", category, { category = it }, "Évocation", modifier = Modifier.weight(1f))
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            SheetButtonRow(
+                onDismiss = onDismiss,
+                onConfirm = { onConfirm(name.trim(), desc.trim(), cost.trim(), range.trim(), duration.trim(), category.trim()) },
+                confirmEnabled = name.isNotBlank() && desc.isNotBlank(),
+                confirmLabel = if (initialName.isEmpty()) "Ajouter" else "Enregistrer",
+                confirmBrush = mainBrush
+            )
+        }
+    }
 }
