@@ -19,11 +19,10 @@ fun HealthCard(character: Character, viewModel: CharacterDetailViewModel) {
         label = "❤\uFE0F POINTS DE VIE",
         current = character.currentHealth,
         max = character.maxHealth,
+        temporaryPoint = character.temporaryHealth,
         mainColor = ColorsSystem.Red,
         backgroundMainColor = ColorsSystem.RedLight,
         mainBrush = ColorsSystem.GradientBarHealth,
-        temporaryLabel = if (character.currentHealth > character.maxHealth)
-            "PV temporaires: +${character.currentHealth - character.maxHealth}" else null,
         onMinus = {
             if (character.currentHealth > 0)
                 viewModel.updateHealth(character.currentHealth - 1, character.maxHealth)
@@ -34,7 +33,9 @@ fun HealthCard(character: Character, viewModel: CharacterDetailViewModel) {
         onReset = {
             viewModel.updateHealth(character.maxHealth, character.maxHealth)
         },
-        onEditMax = { showEditMaxDialog = true }
+        onEditMax = { showEditMaxDialog = true },
+        onPlusTemp = {viewModel.updateTemporaryHealth(character.temporaryHealth + 1)},
+        onMinusTemp = {viewModel.updateTemporaryHealth(character.temporaryHealth - 1)}
     )
 
     if (showEditMaxDialog) {

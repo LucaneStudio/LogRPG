@@ -18,12 +18,11 @@ import cam.lucane.studio.log.rpg.ui.theme.TextSecondary
 fun ControlButton(
     onClick: () -> Unit,
     containerColor: Color,
-    content: @Composable () -> Unit
+    modifier: Modifier = Modifier.size(46.dp).clip(RoundedCornerShape(12.dp)),
+    content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .size(46.dp)
-            .clip(RoundedCornerShape(12.dp))
+        modifier = modifier
             .background(containerColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center

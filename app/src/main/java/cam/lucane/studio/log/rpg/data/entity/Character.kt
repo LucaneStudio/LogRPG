@@ -18,6 +18,7 @@ data class Character(
     // Compteurs
     val currentHealth: Int = 0,
     val maxHealth: Int = 100,
+    val temporaryHealth: Int = 0,
     val currentMana: Int = 0,
     val maxMana: Int = 100,
 

@@ -41,4 +41,7 @@ interface CharacterDao {
     // ✨ Emplacements de sorts
     @Query("UPDATE characters SET spellSlotsJson = :json, updatedAt = :updatedAt WHERE id = :characterId")
     suspend fun updateSpellSlots(characterId: Long, json: String, updatedAt: Long)
+
+    @Query("UPDATE characters SET temporaryHealth = :temp, updatedAt = :updatedAt WHERE id = :characterId")
+    suspend fun updateTemporaryHealth(characterId: Long, temp: Int, updatedAt: Long)
 }
