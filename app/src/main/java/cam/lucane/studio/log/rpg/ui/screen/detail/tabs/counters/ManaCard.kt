@@ -31,8 +31,6 @@ fun ManaCard(character: Character, viewModel: CharacterDetailViewModel) {
                 mainColor = ColorsSystem.Blue,
                 backgroundMainColor = ColorsSystem.BlueLight,
                 mainBrush = ColorsSystem.GradientBarMana,
-                temporaryLabel = if (character.currentMana > character.maxMana)
-                    "Mana temporaire: +${character.currentMana - character.maxMana}" else null,
                 onMinus = {
                     if (character.currentMana > 0)
                         viewModel.updateMana(character.currentMana - 1, character.maxMana)

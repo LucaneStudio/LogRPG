@@ -54,6 +54,11 @@ class CharacterRepository(
         updateCharacter(character.copy(currentHealth = current, maxHealth = max))
     }
 
+    suspend fun updateTemporaryHealth(characterId: Long, temp: Int) {
+        val character = characterDao.getCharacterByIdOnce(characterId) ?: return
+        updateCharacter(character.copy(temporaryHealth = temp))
+    }
+
     suspend fun updateMana(characterId: Long, current: Int, max: Int) {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return
         updateCharacter(character.copy(currentMana = current, maxMana = max))

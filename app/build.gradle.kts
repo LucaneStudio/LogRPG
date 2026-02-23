@@ -12,14 +12,14 @@ kotlin {
 
 android {
     namespace = "cam.lucane.studio.log.rpg"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "cam.lucane.studio.log.rpg"
-        minSdk = 31
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        minSdk = 30
+        targetSdk = 35
+        versionCode = 2
+        versionName = "v1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -29,11 +29,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 

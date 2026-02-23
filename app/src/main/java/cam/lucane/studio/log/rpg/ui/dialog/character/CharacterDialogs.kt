@@ -89,7 +89,7 @@ fun CreateCharacterDialog(
 
         Spacer(Modifier.height(18.dp))
 
-        // Chips couleur avatar
+        /*// Chips couleur avatar
         SheetLabel(text = "COULEUR D'AVATAR")
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -113,6 +113,7 @@ fun CreateCharacterDialog(
         }
 
         Spacer(Modifier.height(24.dp))
+        */
 
         SheetButtonRow(
             onDismiss = onDismiss,

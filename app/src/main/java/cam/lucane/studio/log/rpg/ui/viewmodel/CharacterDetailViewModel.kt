@@ -60,6 +60,12 @@ class CharacterDetailViewModel(
         }
     }
 
+    fun updateTemporaryHealth(temp: Int) {
+        viewModelScope.launch {
+            repository.updateTemporaryHealth(characterId, temp.coerceAtLeast(0))
+        }
+    }
+
     // Mana
     fun updateMana(current: Int, max: Int) {
         viewModelScope.launch {

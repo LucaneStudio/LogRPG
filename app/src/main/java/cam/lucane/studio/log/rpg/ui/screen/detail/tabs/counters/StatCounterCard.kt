@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.CardOptionButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.ControlButton
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.SmallIconBtn
+import cam.lucane.studio.log.rpg.ui.dialog.common.SheetDivider
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.utils.coloredShadow
 
@@ -31,14 +32,18 @@ fun StatCounterCard(
     mainColor: Color,
     backgroundMainColor:  Color,
     mainBrush: Brush,
-    temporaryLabel: String?,
+    tempBrush: Brush = ColorsSystem.GradientTempBarHealth,
+    temporaryPoint: Int? = null,
     onMinus: () -> Unit,
     onPlus: () -> Unit,
+    onMinusTemp: () -> Unit = {},
+    onPlusTemp: () -> Unit = {},
     onReset: () -> Unit,
     onEditMax: () -> Unit,
     onEditMode: (() -> Unit)? = null
 ) {
     val progress = if (max > 0) (current.toFloat() / max).coerceIn(0f, 1f) else 0f
+    val temporaryProgress = if(temporaryPoint != null && temporaryPoint > 0) (temporaryPoint.toFloat() / max).coerceIn(0f, 1f) else 0f
     val isAtMax = current == max
 
     Card(
@@ -130,6 +135,17 @@ fun StatCounterCard(
                                 mainBrush
                             )
                     )
+                    if(temporaryPoint != null){
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(temporaryProgress)
+                                .clip(CircleShape)
+                                .background(
+                                    tempBrush
+                                )
+                        )
+                    }
                 }
 
                 // Valeur + contrôles
@@ -162,14 +178,27 @@ fun StatCounterCard(
                             color = mainColor,
                             fontFamily = NunitoFontFamily
                         )
-                        Text(
-                            text = "/ $max",
-                            fontSize = 13.sp,
-                            lineHeight = 14.sp,
-                            color = ColorsSystem.TextDisabled,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = NunitoFontFamily
-                        )
+                        Row {
+                            Text(
+                                text = "/ $max",
+                                fontSize = 13.sp,
+                                lineHeight = 14.sp,
+                                color = ColorsSystem.TextDisabled,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = NunitoFontFamily
+                            )
+                            if(temporaryPoint != null && temporaryPoint > 0){
+                                Text(
+                                    text = "+$temporaryPoint✨",
+                                    fontSize = 13.sp,
+                                    lineHeight = 14.sp,
+                                    color = mainColor,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = NunitoFontFamily
+                                )
+                            }
+                        }
+
                     }
 
                     // Bouton +
@@ -186,16 +215,65 @@ fun StatCounterCard(
                         )
                     }
                 }
+                temporaryPoint?.let { temporaryPoint ->
 
-                // Label PV temporaires
-                temporaryLabel?.let {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = it,
-                        fontSize = 11.sp,
-                        color = mainColor,
-                        fontWeight = FontWeight.Medium
-                    )
+                    SheetDivider()
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "✨ PV TEMPORAIRES",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = ColorsSystem.RedDark,
+                            letterSpacing = 1.5.sp,
+                            fontFamily = NunitoFontFamily
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.width(114.dp)
+                        ) {
+                            // Bouton -
+                            ControlButton(
+                                onClick = onMinusTemp,
+                                containerColor = backgroundMainColor,
+                                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
+                            ) {
+                                Text(
+                                    text = "-",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = mainColor,
+                                    fontFamily = NunitoFontFamily
+                                )
+                            }
+
+
+                            Text(
+                                text = "$temporaryPoint",
+                                fontSize = 18.sp,
+                                lineHeight = 18.sp,
+                                fontWeight = FontWeight.Black,
+                                color = mainColor,
+                                fontFamily = NunitoFontFamily
+                            )
+
+                            // Bouton +
+                            ControlButton(
+                                onClick = onPlusTemp,
+                                containerColor = backgroundMainColor,
+                                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
+                            ) {
+                                Text(
+                                    text = "+",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = mainColor,
+                                    fontFamily = NunitoFontFamily
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

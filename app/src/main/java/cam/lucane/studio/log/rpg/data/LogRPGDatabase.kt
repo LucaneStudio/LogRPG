@@ -20,7 +20,7 @@ import cam.lucane.studio.log.rpg.data.entity.Note
 
 @Database(
     entities = [Character::class, Ability::class, Item::class, Note::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -102,6 +102,12 @@ abstract class LogRPGDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE characters ADD COLUMN temporaryHealth INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): LogRPGDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -115,7 +121,8 @@ abstract class LogRPGDatabase : RoomDatabase() {
                         MIGRATION_3_4,
                         MIGRATION_4_5,
                         MIGRATION_5_6,
-                        MIGRATION_6_7
+                        MIGRATION_6_7,
+                        MIGRATION_7_8
                     )
                     .build()
                     .also { INSTANCE = it }

@@ -24,6 +24,7 @@ object ColorsSystem {
     val GreenDark = Color(0xFF3DAF8E)
 
     // Red
+    val RedDark = Color(0xFFE03030)
     val Red = Color(0xFFFF6B6B)
     val RedLight = Color(0xFFFFE0E0)
     val RedExtraBar = Color(0xFFFFBBBB)
@@ -90,6 +91,11 @@ object ColorsSystem {
     // ── Barres de vie / mana ──
     val GradientBarHealth = Brush.linearGradient(
         colors = listOf(Color(0xFFFF6B6B), Color(0xFFFF9999)),
+        start = Offset(0f, 0f),
+        end = Offset(Float.POSITIVE_INFINITY, 0f)  // horizontal
+    )
+    val GradientTempBarHealth = Brush.linearGradient(
+        colors = listOf(Color(0xFFFFBBBB), Color(0xFFFFD5D5)),
         start = Offset(0f, 0f),
         end = Offset(Float.POSITIVE_INFINITY, 0f)  // horizontal
     )

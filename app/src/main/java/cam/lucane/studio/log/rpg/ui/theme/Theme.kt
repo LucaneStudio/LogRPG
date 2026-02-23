@@ -1,9 +1,14 @@
 package cam.lucane.studio.log.rpg.ui.theme
 
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 // ── Palette principale ──────────────────────────────────────────────────────
 val BackgroundDark    = Color(0xFF0D0F1A)
