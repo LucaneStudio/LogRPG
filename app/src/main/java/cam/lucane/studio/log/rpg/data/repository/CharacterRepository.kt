@@ -14,6 +14,8 @@ import android.net.Uri
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.File
 import cam.lucane.studio.log.rpg.data.dao.NoteDao
+import cam.lucane.studio.log.rpg.utils.MultiQrCodeUtils
+import com.google.gson.reflect.TypeToken
 
 class CharacterRepository(
     private val characterDao: CharacterDao,
@@ -134,51 +136,26 @@ class CharacterRepository(
     }
 
     // ========== IMPORT/EXPORT ==========
-    suspend fun exportCharacter(characterId: Long): String {
+    // Remplace l'ancienne exportCharacter — unifié avec exportCharacterJson
+    suspend fun exportCharacter(characterId: Long, noNotes: Boolean = false): String {
         val character = characterDao.getCharacterByIdOnce(characterId) ?: return ""
         val abilities = abilityDao.getAbilitiesByCharacterOnce(characterId)
         val items = itemDao.getItemsByCharacterOnce(characterId)
+        val notes = if (noNotes) emptyList() else noteDao.getNotesByCharacterOnce(characterId)
 
-        val export = CharacterExport(
-            name = character.name,
-            currentHealth = character.currentHealth,
-            maxHealth = character.maxHealth,
-            currentMana = character.currentMana,
-            maxMana = character.maxMana,
-            currencyMode = character.currencyMode.name,
-            notes = character.notes,
-            credits = character.credits,
-            abilities = abilities.map { it.toExport() },
-            items = items.map { it.toExport() }
+        return exportCharacterJson(
+            character = if (noNotes) character.copy(notes = null) else character,
+            abilities = abilities,
+            items = items,
+            notes = notes
         )
-
-        return gson.toJson(export)
     }
 
+    // Remplace l'ancienne importCharacter — unifié avec importCharacterFromExport
     suspend fun importCharacter(json: String): Long? {
         return try {
             val export = gson.fromJson(json, CharacterExport::class.java)
-            val characterId = createCharacter(export.name)
-
-            val character = characterDao.getCharacterByIdOnce(characterId)?.copy(
-                currentHealth = export.currentHealth,
-                maxHealth = export.maxHealth,
-                currentMana = export.currentMana,
-                maxMana = export.maxMana,
-                currencyMode = CurrencyMode.valueOf(export.currencyMode),
-                credits = export.credits,
-                notes = export.notes
-            ) ?: return null
-
-            updateCharacter(character)
-
-            val abilities = export.abilities.map { it.toEntity(characterId) }
-            abilityDao.insertAbilities(abilities)
-
-            val items = export.items.map { it.toEntity(characterId) }
-            itemDao.insertItems(items)
-
-            characterId
+            importCharacterFromExport(export)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -312,6 +289,188 @@ class CharacterRepository(
 
     suspend fun deleteNote(note: Note) {
         noteDao.deleteNote(note)
+    }
+
+    suspend fun exportCharacterJson(
+        character: Character,
+        abilities: List<Ability>,
+        items: List<Item>,
+        notes: List<Note>
+    ): String {
+        val slotsType = object : TypeToken<List<SpellSlot>>() {}.type
+        val export = CharacterExport(
+            name            = character.name,
+            currentHealth   = character.currentHealth,
+            maxHealth       = character.maxHealth,
+            temporaryHealth = character.temporaryHealth,
+            currentMana     = character.currentMana,
+            maxMana         = character.maxMana,
+            manaMode        = character.manaMode.name,
+            spellSlots      = Gson().fromJson<List<SpellSlot>>(character.spellSlotsJson, slotsType)
+                .filter { it.max > 0 },
+            currencyMode    = character.currencyMode.name,
+            credits         = character.credits,
+            notes           = character.notes,
+            abilities       = abilities.map { AbilityExport(it.name, it.description,
+                it.cost, it.range, it.duration, it.category) },
+            items           = items.map {
+                ItemExport(
+                    name         = it.name,
+                    description  = it.description,
+                    quantity     = it.quantity,
+                    weight       = it.weight,
+                    category     = it.category,
+                    notes        = it.notes,
+                    isConsumable = it.isConsumable,
+                    isEquipped   = it.isEquipped
+                )
+            },
+            notesList       = notes.map { NoteExport(it.title, it.content) }
+        )
+        return Gson().toJson(export)
+    }
+
+    // Fallback sans notes pour le QR trop lourd
+    suspend fun exportCharacterJsonNoNotes(
+        character: Character,
+        abilities: List<Ability>,
+        items: List<Item>
+    ): String = exportCharacterJson(
+        character.copy(notes = null), abilities, items, emptyList()
+    )
+
+    suspend fun importCharacterFromExport(export: CharacterExport): Long {
+        val now = System.currentTimeMillis()
+        val character = Character(
+            name            = export.name,
+            currentHealth   = export.currentHealth,
+            maxHealth       = export.maxHealth,
+            temporaryHealth = export.temporaryHealth,
+            currentMana     = export.currentMana,
+            maxMana         = export.maxMana,
+            manaMode        = runCatching { ManaMode.valueOf(export.manaMode) }.getOrDefault(ManaMode.MANA),
+            spellSlotsJson  = export.spellSlots?.let { Gson().toJson(it) } ?: SpellSlot.defaultJson(),
+            currencyMode    = runCatching { CurrencyMode.valueOf(export.currencyMode) }.getOrDefault(CurrencyMode.SINGLE),
+            credits         = export.credits,
+            notes           = export.notes,
+            createdAt       = now,
+            updatedAt       = now
+        )
+        val characterId = characterDao.insertCharacter(character)
+
+        // ← null-safe sur les listes (Gson peut les mettre à null)
+        export.abilities?.forEach { a ->
+            abilityDao.insertAbility(Ability(
+                characterId = characterId,
+                name        = a.name,
+                description = a.description,
+                cost        = a.cost,
+                range       = a.range,
+                duration    = a.duration,
+                category    = a.category,
+                notes       = a.notes
+            ))
+        }
+
+        export.items?.forEach { i ->
+            itemDao.insertItem(Item(
+                characterId  = characterId,
+                name         = i.name,
+                description  = i.description,
+                quantity     = i.quantity,
+                weight       = i.weight,
+                category     = i.category,
+                notes        = i.notes,
+                isConsumable = i.isConsumable,
+                isEquipped   = i.isEquipped
+            ))
+        }
+
+        export.notesList?.forEach { n ->
+            noteDao.insertNote(Note(
+                characterId = characterId,
+                title       = n.title,
+                content     = n.content,
+                createdAt   = now,
+                updatedAt   = now
+            ))
+        }
+
+        return characterId
+    }
+
+    suspend fun getAbilitiesOnce(characterId: Long): List<Ability> =
+        abilityDao.getAbilitiesByCharacterOnce(characterId)
+
+    suspend fun getItemsOnce(characterId: Long): List<Item> =
+        itemDao.getItemsByCharacterOnce(characterId)
+
+    suspend fun getNotesOnce(characterId: Long): List<Note> =
+        noteDao.getNotesByCharacterOnce(characterId)
+
+    suspend fun importFromMultiQr(
+        stats: MultiQrCodeUtils.StatsPayload,
+        abilities: List<MultiQrCodeUtils.AbilityPayload>?,
+        items: List<MultiQrCodeUtils.ItemPayload>?,
+        notes: List<MultiQrCodeUtils.NotePayload>?
+    ): Long {
+        val now = System.currentTimeMillis()
+
+        val character = Character(
+            name           = stats.name,
+            currentHealth  = stats.currentHealth,
+            maxHealth      = stats.maxHealth,
+            temporaryHealth = stats.temporaryHealth,
+            currentMana    = stats.currentMana,
+            maxMana        = stats.maxMana,
+            manaMode       = runCatching { ManaMode.valueOf(stats.manaMode) }.getOrDefault(ManaMode.MANA),
+            currencyMode   = runCatching { CurrencyMode.valueOf(stats.currencyMode) }.getOrDefault(CurrencyMode.SINGLE),
+            credits        = stats.credits,
+            notes          = stats.legacyNotes,
+            spellSlotsJson = Gson().toJson(stats.spellSlots.map { SpellSlot(it.level, it.current, it.max) }),
+            createdAt      = now,
+            updatedAt      = now
+        )
+        val characterId = characterDao.insertCharacter(character)
+
+        abilities?.forEach { a ->
+            abilityDao.insertAbility(Ability(
+                characterId = characterId,
+                name        = a.name,
+                description = a.description,
+                cost        = a.cost,
+                range       = a.range,
+                duration    = a.duration,
+                category    = a.category,
+                notes       = a.notes
+            ))
+        }
+
+        items?.forEach { i ->
+            itemDao.insertItem(Item(
+                characterId  = characterId,
+                name         = i.name,
+                description  = i.description,
+                quantity     = i.quantity,
+                weight       = i.weight,
+                category     = i.category,
+                notes        = i.notes,
+                isConsumable = i.isConsumable,
+                isEquipped   = i.isEquipped
+            ))
+        }
+
+        notes?.forEach { n ->
+            noteDao.insertNote(Note(
+                characterId = characterId,
+                title       = n.title,
+                content     = n.content,
+                createdAt   = now,
+                updatedAt   = now
+            ))
+        }
+
+        return characterId
     }
 }
 

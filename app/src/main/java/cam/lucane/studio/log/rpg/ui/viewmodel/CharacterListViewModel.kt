@@ -5,7 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cam.lucane.studio.log.rpg.data.LogRPGDatabase
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.data.model.CharacterExport
 import cam.lucane.studio.log.rpg.data.repository.CharacterRepository
+import cam.lucane.studio.log.rpg.utils.MultiQrCodeUtils
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -46,6 +49,44 @@ class CharacterListViewModel(application: Application) : AndroidViewModel(applic
             if (characterId != null) {
                 onSuccess(characterId)
             } else {
+                onError()
+            }
+        }
+    }
+
+    fun importCharacterFromExport(
+        export: CharacterExport,
+        onSuccess: (Long) -> Unit,
+        onError: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val id = repository.importCharacterFromExport(export)
+                onSuccess(id)
+            } catch (e: Exception) {
+                onError()
+            }
+        }
+    }
+
+    sealed class ImportResult {
+        data class Success(val name: String) : ImportResult()
+        object Error : ImportResult()
+    }
+
+    fun importFromMultiQr(
+        stats: MultiQrCodeUtils.StatsPayload,
+        abilities: List<MultiQrCodeUtils.AbilityPayload>?,
+        items: List<MultiQrCodeUtils.ItemPayload>?,
+        notes: List<MultiQrCodeUtils.NotePayload>?,
+        onSuccess: (Long) -> Unit,
+        onError: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val id = repository.importFromMultiQr(stats, abilities, items, notes)
+                onSuccess(id)
+            } catch (e: Exception) {
                 onError()
             }
         }

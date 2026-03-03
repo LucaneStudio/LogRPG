@@ -23,11 +23,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
 import cam.lucane.studio.log.rpg.ui.components.common.header.HomeHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.CreateCharacterDialog
 import cam.lucane.studio.log.rpg.ui.dialog.character.DeleteCharacterDialog
+import cam.lucane.studio.log.rpg.ui.dialog.character.ImportCharacterSheet
+import cam.lucane.studio.log.rpg.ui.navigation.Routes
 import cam.lucane.studio.log.rpg.ui.screen.list.components.CharacterCard
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterListViewModel
@@ -36,14 +40,14 @@ import dev.chrisbanes.haze.haze
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
+fun CharacterListScreen(navController: NavHostController, onNavigateToCharacter: (Long) -> Unit) {
     val context = LocalContext.current
     val viewModel: CharacterListViewModel = viewModel()
     val characters by viewModel.characters.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<Character?>(null) }
-    var showMenu by remember { mutableStateOf(false) }
+    var showImportSheet by remember { mutableStateOf(false) }
 
     // Launcher pour importer un personnage
     val importLauncher = rememberLauncherForActivityResult(
@@ -75,13 +79,7 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
             containerColor = Color.Transparent,
             topBar = {
                 HomeHeader(
-                    onImportClick = {
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/json"
-                        }
-                        importLauncher.launch(intent)
-                    }
+                    onImportClick = { showImportSheet = true }
                 )
             }
         ) { padding ->
@@ -146,6 +144,21 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
                     onNavigateToCharacter(characterId)
                 }
                 showCreateDialog = false
+            }
+        )
+    }
+
+    if (showImportSheet) {
+        ImportCharacterSheet(
+            navController = navController,
+            onDismiss = { showImportSheet = false },
+            onPickJson = {
+                showImportSheet = false
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                }
+                importLauncher.launch(intent)
             }
         )
     }

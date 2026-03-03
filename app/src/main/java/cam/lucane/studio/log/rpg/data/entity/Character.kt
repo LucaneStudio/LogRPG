@@ -12,25 +12,16 @@ data class Character(
     val name: String,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-
     val pdfPath: String? = null,
-
-    // Compteurs
     val currentHealth: Int = 0,
     val maxHealth: Int = 100,
     val temporaryHealth: Int = 0,
     val currentMana: Int = 0,
     val maxMana: Int = 100,
-
-    // ✨ Mode du compteur Mana/Sorts
     val manaMode: ManaMode = ManaMode.MANA,
-
-    // ✨ Emplacements de sorts stockés en JSON
     val spellSlotsJson: String = SpellSlot.defaultJson(),
-
     val notes: String? = null,
     val profileImagePath: String? = null,
-
     val currencyMode: CurrencyMode = CurrencyMode.SINGLE,
     val credits: Int = 0
 )

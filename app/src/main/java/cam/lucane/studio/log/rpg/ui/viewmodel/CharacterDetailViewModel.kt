@@ -1,6 +1,10 @@
 package cam.lucane.studio.log.rpg.ui.viewmodel
 
 import android.app.Application
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cam.lucane.studio.log.rpg.data.LogRPGDatabase
@@ -9,6 +13,13 @@ import cam.lucane.studio.log.rpg.data.repository.CharacterRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import cam.lucane.studio.log.rpg.ui.utils.QrCodeUtils
+import cam.lucane.studio.log.rpg.utils.MultiQrCodeUtils
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.runBlocking
 
 class CharacterDetailViewModel(
     private val characterId: Long,
@@ -208,5 +219,111 @@ class CharacterDetailViewModel(
 
     fun deleteNote(note: Note) {
         viewModelScope.launch { repository.deleteNote(note) }
+    }
+
+    fun generateQrBitmap(noNotes: Boolean = false): Bitmap? {
+        var result: Bitmap? = null
+        runBlocking {
+            val json = repository.exportCharacter(characterId, noNotes)
+            result = QrCodeUtils.generateQrBitmap(json)
+        }
+        return result
+    }
+
+    fun estimateQrSize(noNotes: Boolean = false): Int {
+        return runBlocking {
+            val json = repository.exportCharacter(characterId, noNotes)
+            QrCodeUtils.estimateQrSize(json)
+        }
+    }
+
+    // Sauvegarder l'image QR dans Photos
+    fun saveQrToGallery(context: Context, bitmap: Bitmap): Boolean {
+        return try {
+            val name = character.value?.name ?: "personnage"
+            val filename = "LogRPG_${name}_${System.currentTimeMillis()}.png"
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                if (Build.VERSION.SDK_INT >= 29)
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LogRPG")
+            }
+            val uri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+            ) ?: return false
+            context.contentResolver.openOutputStream(uri)?.use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+            true
+        } catch (e: Exception) { false }
+    }
+
+    fun exportCharacterJson(): String {
+        // Appelle la suspend fun du repository de façon synchrone
+        // car on est déjà dans un contexte de coroutine
+        return runBlocking {
+            repository.exportCharacterJson(
+                character = character.value ?: return@runBlocking "{}",
+                abilities = abilities.value,
+                items = items.value,
+                notes = notes.value
+            )
+        }
+    }
+
+    data class MultiQrPayloads(
+        val stats: String,
+        val abilities: String,
+        val items: String,
+        val notes: String
+    )
+
+    fun generateMultiQrPayloads(): MultiQrPayloads {
+        return runBlocking {
+            val character = character.value ?: return@runBlocking MultiQrPayloads("","","","")
+            val abilities = repository.getAbilitiesOnce(characterId)
+            val items     = repository.getItemsOnce(characterId)
+            val notes     = repository.getNotesOnce(characterId)
+            val slots: List<SpellSlot> = character.spellSlotsJson
+                ?.let { json ->
+                    Gson().fromJson(json, object : TypeToken<List<SpellSlot>>() {}.type) as? List<SpellSlot>
+                } ?: emptyList()
+
+            MultiQrPayloads(
+                stats      = MultiQrCodeUtils.encodeStats(character, slots),
+                abilities  = MultiQrCodeUtils.encodeAbilities(abilities),
+                items      = MultiQrCodeUtils.encodeItems(items),
+                notes      = MultiQrCodeUtils.encodeNotes(notes)
+            )
+        }
+    }
+
+    // shareQrImages — partager plusieurs bitmaps via la share sheet Android
+    fun shareQrImages(context: Context, bitmaps: List<Bitmap>) {
+        viewModelScope.launch {
+            val uris = bitmaps.mapIndexedNotNull { i, bitmap ->
+                val name = "LogRPG_${character.value?.name}_QR${i+1}_${System.currentTimeMillis()}.png"
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, name)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    if (Build.VERSION.SDK_INT >= 29)
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LogRPG")
+                }
+                val uri = context.contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+                ) ?: return@mapIndexedNotNull null
+                context.contentResolver.openOutputStream(uri)?.use {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+                }
+                uri
+            }
+            if (uris.isEmpty()) return@launch
+            val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "image/png"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, "Partager les QR codes"))
+        }
     }
 }

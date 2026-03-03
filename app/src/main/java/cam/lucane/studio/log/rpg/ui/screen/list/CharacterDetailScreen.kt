@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -47,6 +48,7 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,10 +63,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import cam.lucane.studio.log.rpg.ui.components.common.CharacterSettingsDropdown
 import cam.lucane.studio.log.rpg.ui.components.common.DropdownAction
 import cam.lucane.studio.log.rpg.ui.components.common.header.CharacterDetailHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.ProfileImagePicker
+import cam.lucane.studio.log.rpg.ui.dialog.character.ShareCharacterSheet
+import cam.lucane.studio.log.rpg.ui.navigation.Routes
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.abilities.AbilitiesTab
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.counters.CountersTab
 import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.inventory.InventoryTab
@@ -90,6 +95,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterDetailScreen(
+    navController: NavHostController,
     characterId: Long,
     onNavigateBack: () -> Unit
 ) {
@@ -106,21 +112,28 @@ fun CharacterDetailScreen(
     var showImagePicker by remember { mutableStateOf(false) }
     val notesList by viewModel.notes.collectAsState()
 
-    character?.let { character ->
-        // Export launcher
-        val exportLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    viewModel.exportCharacter { json ->
-                        context.contentResolver.openOutputStream(uri)?.use {
-                            it.write(json.toByteArray())
-                        }
-                    }
+    var showShareSheet by remember { mutableStateOf(false) }
+    val qrSize by remember(character) {
+        derivedStateOf { viewModel.estimateQrSize() }
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        result.data?.data?.let { uri ->
+            // ← utilise exportCharacter qui fetch depuis la DB, pas les StateFlows
+            viewModel.exportCharacter { json ->
+                context.contentResolver.openOutputStream(uri)?.use {
+                    it.write(json.toByteArray())
                 }
+                Toast.makeText(context, "✅ Personnage exporté", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    character?.let { character ->
+        // Export launcher
+
 
         val pdfLauncher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -179,15 +192,10 @@ fun CharacterDetailScreen(
                             onDismiss = { showMenu = false },
                             actions = listOf(
                                 DropdownAction("📷", "Changer la photo") { showImagePicker = true },
-                                DropdownAction("📤", "Exporter en JSON") {
-                                    showMenu = false
-                                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                                        addCategory(Intent.CATEGORY_OPENABLE)
-                                        type = "application/json"
-                                        putExtra(Intent.EXTRA_TITLE, "${character.name}.json")
-                                    }
-                                    exportLauncher.launch(intent)
-                                },
+                                DropdownAction("📤", "Partager le personnage") {
+                                    showShareSheet = true
+                                }
+
                                 //DropdownAction("🗑", "Supprimer", isDanger = true) { showDeleteDialog = true }
                             )
                         )
@@ -249,6 +257,28 @@ fun CharacterDetailScreen(
                         viewModel.removeProfileImage()
                     }
                     showImagePicker = false
+                }
+            )
+        }
+    }
+
+    if (showShareSheet) {
+        character?.let { char ->
+            ShareCharacterSheet(
+                character = char,
+                estimatedQrSize = qrSize,
+                onDismiss = { showShareSheet = false },
+                onMultiQr = { navController.navigate(Routes.multiQrGenerate(characterId)) },
+                onShareQrNoNotes = {
+                    navController.navigate(Routes.qrDisplay(char.id, noNotes = true))
+                },
+                onShareJson = {
+                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_TITLE, "${char.name}.json")
+                    }
+                    exportLauncher.launch(intent)
                 }
             )
         }

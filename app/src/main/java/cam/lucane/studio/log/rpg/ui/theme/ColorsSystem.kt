@@ -47,6 +47,7 @@ object ColorsSystem {
     // Yellow
     val Yellow = Color(0xFFFFD166)
     val YellowLight = Color(0xFFFFF3CC)
+    val YellowDark = Color(0xFFB8860B)
 
     // Orange
     val Orange = Color(0xFFFF8C42)

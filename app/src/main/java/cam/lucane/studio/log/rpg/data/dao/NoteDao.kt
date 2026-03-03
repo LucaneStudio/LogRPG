@@ -17,4 +17,7 @@ interface NoteDao {
 
     @Delete
     suspend fun deleteNote(note: Note)
+
+    @Query("SELECT * FROM notes WHERE characterId = :characterId")
+    suspend fun getNotesByCharacterOnce(characterId: Long): List<Note>
 }
