@@ -2,6 +2,7 @@ package cam.lucane.studio.log.rpg.ui.screen.list.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,7 @@ import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 @Composable
 fun CharacterCard(
     character: Character,
+    isShared: Boolean = false,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -94,12 +96,23 @@ fun CharacterCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ProfileImage(
-                characterName = character.name,
-                imagePath = character.profileImagePath,
-                size = 65.dp,
-                accentBrush = accentBrush
-            )
+            Box {
+                ProfileImage(
+                    characterName = character.name,
+                    imagePath = character.profileImagePath,
+                    size = 65.dp,
+                    accentBrush = accentBrush
+                )
+                if (isShared) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .background(ColorsSystem.Green, CircleShape)
+                            .border(2.dp, ColorsSystem.BackgroundCard, CircleShape)
+                            .align(Alignment.BottomEnd)
+                    )
+                }
+            }
             Column() {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(

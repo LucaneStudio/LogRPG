@@ -27,15 +27,16 @@ data class DropdownAction(
 )
 
 @Composable
-fun CharacterSettingsDropdown(
+fun DropdownInputs(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    actions: List<DropdownAction>
+    actions: List<DropdownAction>,
+    offset: IntOffset = IntOffset(x = 35, y = 120)
 ) {
     if (!expanded) return
 
     Popup(
-        offset = IntOffset(x = 35, y = 120),
+        offset = offset,
         alignment = Alignment.TopEnd,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true)
@@ -46,7 +47,7 @@ fun CharacterSettingsDropdown(
                 .shadow(16.dp, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
                 .background(ColorsSystem.BackgroundCard)
-                .width(200.dp)
+                .width(220.dp)
         ) {
             Column {
                 actions.forEachIndexed { index, action ->
@@ -67,11 +68,10 @@ fun CharacterSettingsDropdown(
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             fontFamily = NunitoFontFamily,
-                            color = if (action.isDanger) ColorsSystem.Red else ColorsSystem.TextPrimary
+                            color = if (action.isDanger) ColorsSystem.Red
+                            else ColorsSystem.TextPrimary
                         )
                     }
-
-                    // Divider sauf après le dernier
                     if (index < actions.size - 1) {
                         Box(
                             modifier = Modifier

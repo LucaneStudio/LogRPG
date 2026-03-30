@@ -23,6 +23,9 @@ object ColorsSystem {
     val GreenLight = Color(0xFFD4F2EA)
     val GreenDark = Color(0xFF3DAF8E)
 
+    val SurfaceDark   = Color(0xFF13162A)
+    val BorderSubtle  = Color(0x14FFFFFF)
+
     // Red
     val RedDark = Color(0xFFE03030)
     val Red = Color(0xFFFF6B6B)

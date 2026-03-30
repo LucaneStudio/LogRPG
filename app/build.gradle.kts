@@ -18,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = 2
-        versionName = "v1.1"
+        versionName = "v1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -84,4 +84,9 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze-materials:1.0.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.28.0")
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
 }

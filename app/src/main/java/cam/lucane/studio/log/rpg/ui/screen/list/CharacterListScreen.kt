@@ -4,14 +4,13 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.ui.components.common.SessionBanner
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
 import cam.lucane.studio.log.rpg.ui.components.common.header.HomeHeader
 import cam.lucane.studio.log.rpg.ui.dialog.character.CreateCharacterDialog
@@ -31,21 +29,46 @@ import cam.lucane.studio.log.rpg.ui.dialog.character.DeleteCharacterDialog
 import cam.lucane.studio.log.rpg.ui.screen.list.components.CharacterCard
 import cam.lucane.studio.log.rpg.ui.theme.*
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterListViewModel
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
+import cam.lucane.studio.log.rpg.ui.viewmodel.PlayerSessionViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
-    val context = LocalContext.current
-    val viewModel: CharacterListViewModel = viewModel()
-    val characters by viewModel.characters.collectAsState()
+fun CharacterListScreen(
+    viewModel: CharacterListViewModel,
+    playerSessionViewModel: PlayerSessionViewModel,
+    onNavigateToCharacter: (Long) -> Unit,
+    onCreateSession: () -> Unit,
+    onJoinSession: () -> Unit,
+    onSwitchCharacter: () -> Unit
+) {
+    val context     = LocalContext.current
+    val characters  by viewModel.characters.collectAsState()
+    val isConnected by playerSessionViewModel.isConnected.collectAsState()
+    val wasKicked   by playerSessionViewModel.wasKicked.collectAsState()
+    val sharedChar  by playerSessionViewModel.sharedCharacter.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<Character?>(null) }
-    var showMenu by remember { mutableStateOf(false) }
 
-    // Launcher pour importer un personnage
+    // ── Dialog "vous avez été kické" ─────────────────────────────────────
+    if (wasKicked) {
+        AlertDialog(
+            onDismissRequest = { playerSessionViewModel.resetKick() },
+            title = {
+                Text("Session terminée", fontFamily = NunitoFontFamily, fontWeight = FontWeight.ExtraBold)
+            },
+            text = {
+                Text("Le Maître de Jeu vous a retiré de la session.", fontFamily = NunitoFontFamily)
+            },
+            confirmButton = {
+                TextButton(onClick = { playerSessionViewModel.resetKick() }) {
+                    Text("OK", fontWeight = FontWeight.ExtraBold, color = AccentPurple)
+                }
+            },
+            containerColor = ColorsSystem.SurfaceDark
+        )
+    }
+
+    // ── Import JSON ───────────────────────────────────────────────────────
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -53,13 +76,9 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
             val json = context.contentResolver.openInputStream(uri)
                 ?.bufferedReader()?.readText() ?: return@let
             viewModel.importCharacter(
-                json = json,
-                onSuccess = { characterId ->
-                    Toast.makeText(context, "✅ Personnage importé", Toast.LENGTH_SHORT).show()
-                },
-                onError = {
-                    Toast.makeText(context, "❌ Erreur d'importation", Toast.LENGTH_SHORT).show()
-                }
+                json      = json,
+                onSuccess = { Toast.makeText(context, "✅ Personnage importé", Toast.LENGTH_SHORT).show() },
+                onError   = { Toast.makeText(context, "❌ Erreur d'importation", Toast.LENGTH_SHORT).show() }
             )
         }
     }
@@ -69,135 +88,119 @@ fun CharacterListScreen(onNavigateToCharacter: (Long) -> Unit) {
             .fillMaxSize()
             .background(ColorsSystem.BackgroundApp)
     ) {
-        // ── Contenu principal ────────────────────────────────────────────
         Scaffold(
             modifier = Modifier.systemBarsPadding(),
             containerColor = Color.Transparent,
             topBar = {
                 HomeHeader(
-                    onImportClick = {
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/json"
-                        }
-                        importLauncher.launch(intent)
-                    }
+                    onImportClick   = {
+                        importLauncher.launch(
+                            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "application/json"
+                            }
+                        )
+                    },
+                    onCreateSession = onCreateSession,
+                    onJoinSession   = onJoinSession,
+                    isInSession     = isConnected
                 )
             }
-        ) { padding ->
-            if (characters.isEmpty()) {
-                CharacterEmptyState(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    onCreateClick = { showCreateDialog = true }
-                )
-            } else {
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(innerPadding)
+            ) {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    item{
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 4.dp),
-                            text = "MES PERSONNAGES",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Black,
-                            fontFamily = NunitoFontFamily,
-                            textAlign = TextAlign.Start,
-                            color = ColorsSystem.TextDisabled,
-                            letterSpacing = (1.5).sp
-                        )
+
+                    // ── Bannière session active (joueur) ──────────────────
+                    item {
+                        AnimatedVisibility(
+                            visible = isConnected,
+                            enter   = expandVertically() + fadeIn(),
+                            exit    = shrinkVertically() + fadeOut()
+                        ) {
+                            SessionBanner(
+                                label    = "EN SESSION",
+                                subtitle = if (sharedChar?.name != null) "Partage actif : ${sharedChar?.name}"
+                                else "Connecté · aucun personnage partagé",
+                                onSwitch = onSwitchCharacter,
+                                onQuit   = { playerSessionViewModel.disconnect() }
+                            )
+                        }
                     }
-                    items(characters, key = { it.id }) { character ->
-                        CharacterCard(
-                            character = character,
-                            onClick = { onNavigateToCharacter(character.id) },
-                            onDelete = { showDeleteDialog = character }
-                        )
+
+                    // ── Liste personnages ─────────────────────────────────
+                    if (characters.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "MES PERSONNAGES",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = ColorsSystem.TextDisabled,
+                                letterSpacing = 1.5.sp,
+                                fontFamily = NunitoFontFamily,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(characters, key = { it.id }) { character ->
+                            CharacterCard(
+                                character = character,
+                                isShared  = isConnected && sharedChar?.id == character.id,
+                                onClick   = { onNavigateToCharacter(character.id) },
+                                onDelete  = { showDeleteDialog = character }
+                            )
+                        }
                     }
-                    item { Spacer(modifier = Modifier.height(1.dp)) }
+
+                    // ── Bouton ajouter ────────────────────────────────────
                     item {
                         DotButton(
-                            modifier = Modifier.fillMaxWidth(0.9f),
-                            label = "＋ Ajouter un personnage",
-                            dashColor = ColorsSystem.Green.copy(0.4f),
+                            modifier   = Modifier.fillMaxWidth(0.9f),
+                            label      = "＋ Ajouter un personnage",
+                            dashColor  = ColorsSystem.Green.copy(0.4f),
                             labelColor = ColorsSystem.GreenDark,
-                            onClick = { showCreateDialog = true }
+                            onClick    = { showCreateDialog = true }
                         )
                     }
+
+                    item { Spacer(Modifier.height(16.dp)) }
                 }
             }
         }
     }
 
-    // ── Dialogues ────────────────────────────────────────────────────────
+    // ── Dialogues ─────────────────────────────────────────────────────────
     if (showCreateDialog) {
         CreateCharacterDialog(
             onDismiss = { showCreateDialog = false },
             onCreated = { name ->
-                viewModel.createCharacter(name) { characterId ->
-                    onNavigateToCharacter(characterId)
+                viewModel.createCharacter(name) { id ->
+                    showCreateDialog = false
+                    onNavigateToCharacter(id)
                 }
-                showCreateDialog = false
             }
         )
     }
 
     showDeleteDialog?.let { character ->
-
         DeleteCharacterDialog(
             character = character,
+            onDismiss = { showDeleteDialog = null },
             onConfirm = {
                 viewModel.deleteCharacter(character)
                 showDeleteDialog = null
-            },
-            onDismiss = {
-                showDeleteDialog = null
             }
         )
-    }
-}
-
-@Composable
-private fun CharacterEmptyState(
-    modifier: Modifier = Modifier,
-    onCreateClick: () -> Unit
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("⚔️", fontSize = 64.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "Aucun personnage",
-            fontSize = 15.sp,
-            fontFamily = NunitoFontFamily,
-            color = ColorsSystem.TextPrimary,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            "Créez votre premier aventurier",
-            fontSize = 14.sp,
-            fontFamily = NunitoFontFamily,
-            color = ColorsSystem.TextSecondary,
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Button(
-            onClick = onCreateClick,
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = ColorsSystem.Green)
-        ) {
-            Text("＋ Ajouter un personnage")
-        }
     }
 }

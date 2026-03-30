@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,18 +24,20 @@ import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 
 @Composable
 fun HealthManaBar(
+    modifier: Modifier = Modifier,
     label: String,
     current: Int,
     max: Int,
-    color: Color
+    color: Color,
+    valueText: (@Composable () -> Unit)? = null
 ) {
     val progress = if (max > 0) (current.toFloat() / max).coerceIn(0f, 1f) else 0f
     val hasOverflow = current > max
     val overflowProgress = if (hasOverflow && max > 0) ((current - max).toFloat() / max).coerceIn(0f, 1f) else 0f
 
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
             text = label,
@@ -44,6 +47,8 @@ fun HealthManaBar(
             modifier = Modifier.width(20.dp),
             fontFamily = NunitoFontFamily
         )
+
+        Spacer(Modifier.width(6.dp))
 
         Box(
             modifier = Modifier
@@ -72,5 +77,6 @@ fun HealthManaBar(
                 )
             }
         }
+        valueText?.invoke()
     }
 }
