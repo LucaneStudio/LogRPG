@@ -322,6 +322,7 @@ private fun Ability.toExport() = AbilityExport(
     cost = cost,
     range = range,
     duration = duration,
+    damage = damage,
     category = category,
     notes = notes
 )
@@ -333,6 +334,7 @@ private fun AbilityExport.toEntity(characterId: Long) = Ability(
     cost = cost,
     range = range,
     duration = duration,
+    damage = damage,
     category = category,
     notes = notes
 )

@@ -21,6 +21,7 @@ data class AbilityExport(
     val cost: String? = null,
     val range: String? = null,
     val duration: String? = null,
+    val damage: String? = null,
     val category: String? = null,
     val notes: String? = null
 )

@@ -5,7 +5,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-// ✅ CRUCIAL : Force tout sur JVM 17
 kotlin {
     jvmToolchain(17)
 }

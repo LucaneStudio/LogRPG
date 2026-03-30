@@ -30,17 +30,19 @@ fun AbilityDialog(
     initialRange: String = "",
     initialDuration: String = "",
     initialCategory: String = "",
+    initialDamage: String = "",
     onDismiss: () -> Unit,
     mainColor: Color,
     mainBrush: Brush,
-    onConfirm: (String, String, String, String, String, String) -> Unit
+    onConfirm: (String, String, String, String, String, String, String) -> Unit
 ) {
-    var name     by remember { mutableStateOf(initialName) }
-    var desc     by remember { mutableStateOf(initialDesc) }
-    var cost     by remember { mutableStateOf(initialCost) }
-    var range    by remember { mutableStateOf(initialRange) }
+    var name by remember { mutableStateOf(initialName) }
+    var desc by remember { mutableStateOf(initialDesc) }
+    var cost by remember { mutableStateOf(initialCost) }
+    var range by remember { mutableStateOf(initialRange) }
     var duration by remember { mutableStateOf(initialDuration) }
     var category by remember { mutableStateOf(initialCategory) }
+    var damage by remember { mutableStateOf(initialDamage) }
 
     @Composable
     fun Field(
@@ -100,7 +102,11 @@ fun AbilityDialog(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Field("DÉGÂTS", damage, { damage = it }, "2d6+3 feu", modifier = Modifier.weight(1f))
                 Field("DURÉE", duration, { duration = it }, "1 action", modifier = Modifier.weight(1f))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Field("CATÉGORIE", category, { category = it }, "Évocation", modifier = Modifier.weight(1f))
             }
 
@@ -108,7 +114,7 @@ fun AbilityDialog(
 
             SheetButtonRow(
                 onDismiss = onDismiss,
-                onConfirm = { onConfirm(name.trim(), desc.trim(), cost.trim(), range.trim(), duration.trim(), category.trim()) },
+                onConfirm = { onConfirm(name.trim(), desc.trim(), cost.trim(), range.trim(), duration.trim(), damage.trim(), category.trim()) },
                 confirmEnabled = name.isNotBlank() && desc.isNotBlank(),
                 confirmLabel = if (initialName.isEmpty()) "Ajouter" else "Enregistrer",
                 confirmBrush = mainBrush

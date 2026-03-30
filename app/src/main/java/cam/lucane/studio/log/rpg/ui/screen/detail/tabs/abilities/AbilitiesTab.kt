@@ -140,7 +140,7 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
         AbilityDialog(
             title = "Nouvelle capacité",
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, desc, cost, range, duration, category ->
+            onConfirm = { name, desc, cost, range, duration, damage, category ->
                 viewModel.addAbility(
                     Ability(
                         characterId = characterId,
@@ -149,6 +149,7 @@ fun AbilitiesTab(characterId: Long, viewModel: CharacterDetailViewModel) {
                         cost = cost.ifBlank { null },
                         range = range.ifBlank { null },
                         duration = duration.ifBlank { null },
+                        damage = damage.ifBlank { null },
                         category = category.ifBlank { null }
                     )
                 )

@@ -209,6 +209,9 @@ fun AbilityCard(mainColor: Color,mainBrush: Brush, ability: Ability, viewModel: 
                             ability.duration?.let {
                                 AbilityDetailRow(icon = "⏱️", label = "Durée", value = it)
                             }
+                            ability.damage?.let {
+                                AbilityDetailRow(icon = "⚔️", label = "Dégâts", value = it)
+                            }
                         }
                     }
                 }
@@ -232,9 +235,10 @@ fun AbilityCard(mainColor: Color,mainBrush: Brush, ability: Ability, viewModel: 
             initialCost = ability.cost ?: "",
             initialRange = ability.range ?: "",
             initialDuration = ability.duration ?: "",
+            initialDamage = ability.damage ?: "",   // ✨
             initialCategory = ability.category ?: "",
             onDismiss = { showEditDialog = false },
-            onConfirm = { name, desc, cost, range, duration, category ->
+            onConfirm = { name, desc, cost, range, duration, damage, category ->
                 viewModel.updateAbility(
                     ability.copy(
                         name = name,
@@ -242,6 +246,7 @@ fun AbilityCard(mainColor: Color,mainBrush: Brush, ability: Ability, viewModel: 
                         cost = cost.ifBlank { null },
                         range = range.ifBlank { null },
                         duration = duration.ifBlank { null },
+                        damage = damage.ifBlank { null },   // ✨
                         category = category.ifBlank { null }
                     )
                 )
