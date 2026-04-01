@@ -3,15 +3,20 @@ package cam.lucane.studio.log.rpg.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import cam.lucane.studio.log.rpg.data.session.CombatSessionState
 import cam.lucane.studio.log.rpg.data.session.MJServer
 import cam.lucane.studio.log.rpg.data.session.PlayerSlot
 import cam.lucane.studio.log.rpg.data.session.SessionConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class MJViewModel(application: Application) : AndroidViewModel(application) {
+class MJViewModel (
+    application: Application,
+) : AndroidViewModel(application) {
 
     private val server = MJServer()
 
@@ -20,6 +25,12 @@ class MJViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _sessionConfig = MutableStateFlow<SessionConfig?>(null)
     val sessionConfig: StateFlow<SessionConfig?> = _sessionConfig.asStateFlow()
+
+    init {
+        players
+            .onEach { CombatSessionState.sync(it) }
+            .launchIn(viewModelScope)
+    }
 
     fun startSession() {
         viewModelScope.launch {

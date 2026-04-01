@@ -1,0 +1,50 @@
+package cam.lucane.studio.log.rpg.ui.combat.components.common
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
+
+/**
+ * Avatar coloré avec une lettre initiale.
+ * Utilisé partout dans le module combat pour représenter un participant.
+ */
+@Composable
+fun AvatarBox(
+    letter   : String,
+    color    : Color,
+    size     : Dp     = 28.dp,
+    shape    : Shape  = RoundedCornerShape(9.dp),
+    fontSize : Int    = 11,
+    textColor: Color  = ColorsSystem.BackgroundCard,
+    modifier : Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(shape)
+            .background(color),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text       = letter,
+            fontSize   = fontSize.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color      = textColor,
+            fontFamily = NunitoFontFamily,
+        )
+    }
+}

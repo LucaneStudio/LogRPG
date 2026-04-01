@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.*
 import androidx.navigation.compose.*
+import cam.lucane.studio.log.rpg.ui.combat.CombatScreen
 import cam.lucane.studio.log.rpg.ui.screen.list.CharacterDetailScreen
 import cam.lucane.studio.log.rpg.ui.screen.list.CharacterListScreen
 import cam.lucane.studio.log.rpg.ui.screen.mj.MJScreen
@@ -17,6 +18,7 @@ object Routes {
     const val MJ_SCREEN    = "mj_screen?autoStart={autoStart}"
     const val JOIN_SESSION = "join_session"
     const val JOIN_SESSION_SWITCH = "join_session_switch"
+    const val COMBAT = "combat"
 
     fun characterDetail(id: Long) = "character_detail/$id"
     fun mjScreen(autoStart: Boolean = false) = "mj_screen?autoStart=$autoStart"
@@ -53,7 +55,6 @@ fun LogRPGNavigation(navController: NavHostController) {
             )
         }
 
-        // ✨ MJ Screen avec argument optionnel autoStart
         composable(
             route = Routes.MJ_SCREEN,
             arguments = listOf(
@@ -64,7 +65,12 @@ fun LogRPGNavigation(navController: NavHostController) {
             )
         ) { back ->
             val autoStart = back.arguments?.getBoolean("autoStart") ?: false
-            MJScreen(viewModel = mjViewModel, autoStart = autoStart, onNavigateBack = {navController.navigate(Routes.CHARACTER_LIST)})
+            MJScreen(
+                viewModel = mjViewModel,
+                autoStart = autoStart,
+                onStartCombat = {navController.navigate(Routes.COMBAT)},
+                onNavigateBack = {navController.navigate(Routes.CHARACTER_LIST)}
+            )
         }
 
         composable(Routes.JOIN_SESSION) {
@@ -99,5 +105,11 @@ fun LogRPGNavigation(navController: NavHostController) {
                 startStep         = JoinStep.PICK
             )
         }
+        composable(Routes.COMBAT) {
+            CombatScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
     }
 }

@@ -7,8 +7,8 @@ data class PlayerInfo(
     val maxHealth: Int,
     val currentMana: Int,
     val maxMana: Int,
-    val hasMana: Boolean = true,           // false = mode emplacements de sorts
-    val spellSlotsJson: String? = null     // ✨ JSON des emplacements si hasMana=false
+    val hasMana: Boolean = true,
+    val spellSlotsJson: String? = null
 )
 
 data class SessionMessage(
