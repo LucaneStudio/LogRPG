@@ -17,18 +17,30 @@ import cam.lucane.studio.log.rpg.data.entity.SpellSlot
 import com.google.gson.Gson
 import cam.lucane.studio.log.rpg.data.dao.NoteDao
 import cam.lucane.studio.log.rpg.data.entity.Note
+import cam.lucane.studio.log.rpg.data.dao.StatDao
+import cam.lucane.studio.log.rpg.data.entity.StatSection
+import cam.lucane.studio.log.rpg.data.entity.StatWidget
 
 @Database(
-    entities = [Character::class, Ability::class, Item::class, Note::class],
-    version = 9,
+    entities = [
+        Character::class,
+        Ability::class,
+        Item::class,
+        Note::class,
+        StatSection::class,
+        StatWidget::class,
+    ],
+    version = 10,
     exportSchema = false
 )
+
 @TypeConverters(Converters::class)
 abstract class LogRPGDatabase : RoomDatabase() {
     abstract fun characterDao(): CharacterDao
     abstract fun abilityDao(): AbilityDao
     abstract fun itemDao(): ItemDao
     abstract fun noteDao(): NoteDao
+    abstract fun statDao(): StatDao
 
     companion object {
         @Volatile
@@ -114,6 +126,39 @@ abstract class LogRPGDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+            CREATE TABLE IF NOT EXISTS stat_sections (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                characterId INTEGER NOT NULL,
+                title       TEXT NOT NULL,
+                position    INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (characterId) REFERENCES characters(id) ON DELETE CASCADE
+            )
+        """)
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_stat_sections_characterId ON stat_sections(characterId)"
+                )
+                database.execSQL("""
+            CREATE TABLE IF NOT EXISTS stat_widgets (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                sectionId   INTEGER NOT NULL,
+                title       TEXT NOT NULL,
+                type        TEXT NOT NULL DEFAULT 'FREE',
+                value       TEXT NOT NULL DEFAULT '',
+                modifier    TEXT NOT NULL DEFAULT '',
+                accentColor TEXT NOT NULL DEFAULT 'PURPLE',
+                position    INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (sectionId) REFERENCES stat_sections(id) ON DELETE CASCADE
+            )
+        """)
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_stat_widgets_sectionId ON stat_widgets(sectionId)"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LogRPGDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -129,7 +174,8 @@ abstract class LogRPGDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_7_8,
-                        MIGRATION_8_9
+                        MIGRATION_8_9,
+                        MIGRATION_9_10
                     )
                     .build()
                     .also { INSTANCE = it }

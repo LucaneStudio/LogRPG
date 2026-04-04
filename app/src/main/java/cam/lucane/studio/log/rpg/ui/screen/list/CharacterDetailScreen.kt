@@ -52,6 +52,7 @@ import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModel
 import cam.lucane.studio.log.rpg.ui.viewmodel.CharacterDetailViewModelFactory
 import cam.lucane.studio.log.rpg.ui.viewmodel.PlayerSessionViewModel
 import java.io.File
+import cam.lucane.studio.log.rpg.ui.screen.detail.tabs.stats.StatsTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,9 +182,10 @@ fun CharacterDetailScreen(
                         )
 
                         1 -> CountersTab(character, viewModel)
-                        2 -> AbilitiesTab(characterId, viewModel)
-                        3 -> InventoryTab(characterId, viewModel)
-                        4 -> NotesTab(
+                        2 -> StatsTab(characterId = characterId)
+                        3 -> AbilitiesTab(characterId, viewModel)
+                        4 -> InventoryTab(characterId, viewModel)
+                        5 -> NotesTab(
                             mainColor = getAccentColorByCharacterId(characterId),
                             mainBrush = getAccentBrushByCharacterId(characterId),
                             notes = notesList,

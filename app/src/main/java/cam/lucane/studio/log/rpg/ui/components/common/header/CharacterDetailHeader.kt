@@ -115,7 +115,7 @@ fun CharacterDetailHeader(
         }
 
         // ── Tab pills ──
-        val tabs = listOf( "📄 Fiche", "🎲 Compt.", "📖 Sorts", "🎒 Inventaire", "📝 Notes")
+        val tabs = listOf("📄 Fiche", "🎲 Compteurs", "⚔️ Caract.", "✨ Capacités", "🎒 Inventaire", "📝 Notes")
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
