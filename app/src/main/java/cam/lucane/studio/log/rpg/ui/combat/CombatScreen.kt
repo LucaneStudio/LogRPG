@@ -1,6 +1,7 @@
 package cam.lucane.studio.log.rpg.ui.combat
 
 import android.app.Activity
+import android.app.Application
 import android.content.pm.ActivityInfo
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,22 +18,23 @@ import cam.lucane.studio.log.rpg.ui.combat.panels.CombatLeftPanel
 import cam.lucane.studio.log.rpg.ui.combat.panels.CombatRightPanel
 
 @Composable
-fun CombatScreen(
-    viewModel     : CombatViewModel = viewModel(factory = CombatViewModel.Factory),
-    onNavigateBack: () -> Unit,
-) {
-    val context        = LocalContext.current
-    val state          by viewModel.state.collectAsState()
-    val sessionPlayers by viewModel.sessionPlayers.collectAsState()
+fun CombatScreen(onNavigateBack: () -> Unit) {
+
+    val context   = LocalContext.current
+    val viewModel : CombatViewModel = viewModel(
+        factory = CombatViewModel.factory(context.applicationContext as Application)
+    )
+
+    val state           by viewModel.state.collectAsState()
+    val sessionPlayers  by viewModel.sessionPlayers.collectAsState()
+    val localCharacters by viewModel.localCharacters.collectAsState()
 
     var showEnd by remember { mutableStateOf(false) }
 
-    // ── Landscape forcé + barres système cachées ─────────────────────────────
-    // Keyer sur state.isStarted : l'effet est ignoré tant que le combat n'est pas
-    // lancé, puis re-déclenché dès que isStarted passe à true.
+    // ── Landscape forcé + barres système cachées ──────────────────────────────
     DisposableEffect(state.isStarted) {
         if (!state.isStarted) return@DisposableEffect onDispose {}
-        val activity = context as? Activity ?: return@DisposableEffect onDispose {}
+        val activity   = context as? Activity ?: return@DisposableEffect onDispose {}
         val window     = activity.window
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         val originalOrientation = activity.requestedOrientation
@@ -50,7 +52,7 @@ fun CombatScreen(
         }
     }
 
-    // ── Callbacks ────────────────────────────────────────────────────────────
+    // ── Callbacks ─────────────────────────────────────────────────────────────
     val onHpChange        : (String, Int) -> Unit          = { id, d -> viewModel.changeHp(id, d) }
     val onAddCondition    : (String, String) -> Unit       = { id, c -> viewModel.addCondition(id, c) }
     val onRemoveCondition : (String, String) -> Unit       = { id, c -> viewModel.removeCondition(id, c) }
@@ -59,15 +61,18 @@ fun CombatScreen(
     val onBonusRemove     : (String) -> Unit               = { id   -> viewModel.removeBonus(id) }
     val onSetStatus       : (String, CombatStatus) -> Unit = { id, s -> viewModel.setStatus(id, s) }
     val onRemove          : (String) -> Unit               = { id   -> viewModel.removeParticipant(id) }
-    val onAddParticipant = { name: String, type: ParticipantType, maxHp: Int, init: Int ->
+    val onAddParticipant  = { name: String, type: ParticipantType, maxHp: Int, init: Int ->
         viewModel.addParticipant(name, type, maxHp, init)
     }
 
+    // ── Setup ─────────────────────────────────────────────────────────────────
     if (!state.isStarted) {
         CombatSetupScreen(
             state               = state,
             connectedPlayers    = sessionPlayers,
+            localCharacters     = localCharacters,
             onAddSessionPlayers = { viewModel.addSessionPlayers(it) },
+            onAddLocalCharacter = { viewModel.addLocalCharacter(it) },
             onAddParticipant    = onAddParticipant,
             onSetInitiative     = onInitiativeSet,
             onRemove            = onRemove,
@@ -77,7 +82,7 @@ fun CombatScreen(
         return
     }
 
-    // ── Layout paysage ───────────────────────────────────────────────────────
+    // ── Layout paysage ────────────────────────────────────────────────────────
     Row(modifier = Modifier.fillMaxSize()) {
         CombatLeftPanel(
             state             = state,
@@ -94,7 +99,7 @@ fun CombatScreen(
         )
         CombatRightPanel(
             state            = state,
-            onHpChange       = onHpChange,      // ← branché ici
+            onHpChange       = onHpChange,
             onAddParticipant = onAddParticipant,
             onSetStatus      = onSetStatus,
             onRemove         = onRemove,
@@ -109,7 +114,6 @@ fun CombatScreen(
         CombatEndSheet(
             state     = state,
             onDismiss = {
-                // Forcer le retour en portrait immédiatement, sans attendre le dispose
                 (context as? Activity)?.requestedOrientation =
                     ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 showEnd = false

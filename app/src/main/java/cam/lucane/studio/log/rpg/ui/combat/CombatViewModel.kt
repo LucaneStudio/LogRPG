@@ -1,25 +1,56 @@
 package cam.lucane.studio.log.rpg.ui.combat
 
+import android.app.Application
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import cam.lucane.studio.log.rpg.data.LogRPGDatabase
+import cam.lucane.studio.log.rpg.data.entity.Character
+import cam.lucane.studio.log.rpg.data.repository.CharacterRepository
 import cam.lucane.studio.log.rpg.data.session.CombatSessionState
 import cam.lucane.studio.log.rpg.data.session.PlayerSlot
 import cam.lucane.studio.log.rpg.ui.combat.model.*
 import kotlinx.coroutines.flow.*
 
-class CombatViewModel : ViewModel() {
+class CombatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val gson = Gson()
 
+    // ── Base de données ───────────────────────────────────────────────────────
+    private val db = LogRPGDatabase.getDatabase(application)
+    private val repository = CharacterRepository(
+        characterDao = db.characterDao(),
+        abilityDao   = db.abilityDao(),
+        itemDao      = db.itemDao(),
+        noteDao      = db.noteDao(),
+        statDao      = db.statDao(),
+    )
+
+    // ── États ─────────────────────────────────────────────────────────────────
     private val _state = MutableStateFlow(CombatState())
     val state: StateFlow<CombatState> = _state.asStateFlow()
 
     val sessionPlayers: StateFlow<List<PlayerSlot>> = CombatSessionState.players
 
+    /** Liste des personnages locaux disponibles pour le combat. */
+    val localCharacters: StateFlow<List<Character>> = repository.getAllCharacters()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // ── Factory ───────────────────────────────────────────────────────────────
+    companion object {
+        fun factory(application: Application): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                    CombatViewModel(application) as T
+            }
+    }
+
     init {
+        // Sync des stats joueurs connectés en temps réel
         CombatSessionState.players
             .onEach { slots ->
                 _state.update { s ->
@@ -30,26 +61,39 @@ class CombatViewModel : ViewModel() {
                 }
             }
             .launchIn(viewModelScope)
-
-//        loadTestCombatData()
-//        CombatSessionState.loadTestPlayers()
-//        loadTestSetupData()
     }
 
-    companion object {
-        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = CombatViewModel() as T
-        }
-    }
-
-    // ── Setup ────────────────────────────────────────────────────────────────
+    // ── Setup : joueurs de session ────────────────────────────────────────────
 
     fun addSessionPlayers(slots: List<PlayerSlot>) {
         val existing = _state.value.participants.mapNotNull { it.linkedSocketId }.toSet()
         val newPJs   = slots.filter { it.socketId !in existing }.mapNotNull { it.toParticipant() }
         _state.update { it.copy(participants = it.participants + newPJs) }
     }
+
+    // ── Setup : personnages locaux ────────────────────────────────────────────
+
+    /**
+     * Ajoute un personnage local au combat en tant que PNJ.
+     * Ses PV actuels sont repris ; il sera traité comme un PNJ en combat.
+     */
+    fun addLocalCharacter(character: Character) {
+        // Garde-fou : ne pas ajouter deux fois le même
+        if (_state.value.participants.any { it.localCharId == character.id }) return
+        _state.update {
+            it.copy(participants = it.participants + CombatParticipant(
+                name         = character.name,
+                type         = ParticipantType.PNJ,
+                localCharId  = character.id,
+                currentHp    = character.currentHealth,
+                maxHp        = character.maxHealth,
+                avatarColor  = colorFor(character.name),
+                avatarLetter = character.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+            ))
+        }
+    }
+
+    // ── Setup : monstres / PNJ manuels ───────────────────────────────────────
 
     fun addParticipant(name: String, type: ParticipantType, maxHp: Int, initiative: Int) {
         _state.update {
@@ -68,6 +112,8 @@ class CombatViewModel : ViewModel() {
     fun removeParticipant(id: String) =
         _state.update { it.copy(participants = it.participants.filter { p -> p.id != id }) }
 
+    // ── Démarrage ─────────────────────────────────────────────────────────────
+
     fun startCombat() = _state.update { s ->
         s.copy(
             isStarted       = true,
@@ -77,72 +123,54 @@ class CombatViewModel : ViewModel() {
         )
     }
 
-    // ── Tour ─────────────────────────────────────────────────────────────────
+    // ── Tour ──────────────────────────────────────────────────────────────────
 
     fun nextTurn() = _state.update { s ->
         val currentId = s.currentId ?: return@update s
-        val newPlayed = s.playedThisRound + currentId
+        val played    = s.playedThisRound + currentId
+        val remaining = s.sortedActive.filter { it.id !in played }
 
-        // Prochain actif = persona non joué avec la plus haute effectiveInitiative
-        val playedSet  = newPlayed.toSet()
-        val nextActive = s.participants
-            .filter { it.status == CombatStatus.ACTIVE && it.id !in playedSet }
-            .maxByOrNull { it.effectiveInitiative }
-
-        return@update if (nextActive != null) {
-            // Il reste des personas à jouer ce round
-            s.copy(playedThisRound = newPlayed, currentId = nextActive.id)
-        } else {
-            // Fin de round → appliquer les bonus en attente puis passer au round suivant
-            val afterPending = s.applyPendingBonuses()
-            afterPending.copy(
+        if (remaining.isEmpty()) {
+            // Fin du round → nouveau round
+            val allActive  = s.participants.filter { it.status == CombatStatus.ACTIVE }
+            val promoted   = s.participants.map { p ->
+                if (p.hasPendingBonus) p.copy(initiativeBonus = p.pendingBonus, pendingBonus = 0) else p
+            }
+            val sortedNext = promoted
+                .filter { it.status == CombatStatus.ACTIVE }
+                .sortedByDescending { it.effectiveInitiative }
+            s.copy(
+                participants    = promoted,
                 round           = s.round + 1,
                 playedThisRound = emptyList(),
-                currentId       = afterPending.firstActiveId(),
+                currentId       = sortedNext.firstOrNull()?.id,
             )
+        } else {
+            s.copy(playedThisRound = played, currentId = remaining.first().id)
         }
     }
 
-    private fun CombatState.applyPendingBonuses() = copy(
-        participants = participants.map { p ->
-            if (p.hasPendingBonus)
-                p.copy(initiativeBonus = p.initiativeBonus + p.pendingBonus, pendingBonus = 0)
-            else p
-        }
-    )
-
-    // ── Initiative ───────────────────────────────────────────────────────────
-
     fun updateInitiative(id: String, value: Int) = update(id) { copy(initiative = value) }
 
-    /**
-     * Applique un bonus/malus d'initiative.
-     *
-     * - Persona actif ou déjà joué ce round → pendingBonus (appliqué au prochain round)
-     * - Persona non encore joué → immédiat, se re-trie parmi les non-joués
-     *   sans jamais passer avant l'actif
-     */
+    // ── Bonus d'initiative ────────────────────────────────────────────────────
+
     fun addBonus(id: String, bonus: Int) {
         val s             = _state.value
         val hasPlayedOrIs = id == s.currentId || id in s.playedThisRound
-
-        if (hasPlayedOrIs) {
-            update(id) { copy(pendingBonus = bonus) }
-        } else {
-            update(id) { copy(initiativeBonus = bonus) }
-        }
+        if (hasPlayedOrIs) update(id) { copy(pendingBonus = bonus) }
+        else               update(id) { copy(initiativeBonus = bonus) }
     }
 
     fun removeBonus(id: String) = update(id) { copy(initiativeBonus = 0, pendingBonus = 0) }
 
-    // ── HP ───────────────────────────────────────────────────────────────────
+    // ── HP ────────────────────────────────────────────────────────────────────
 
     fun changeHp(id: String, delta: Int) = update(id) {
         if (isReadOnly) this
         else copy(currentHp = (currentHp + delta).coerceIn(0, maxHp))
     }
 
-    // ── Conditions ───────────────────────────────────────────────────────────
+    // ── Conditions ────────────────────────────────────────────────────────────
 
     fun addCondition(id: String, condition: String) = update(id) {
         copy(conditions = (conditions + condition).distinct())
@@ -152,11 +180,11 @@ class CombatViewModel : ViewModel() {
         copy(conditions = conditions - condition)
     }
 
-    // ── Statut ───────────────────────────────────────────────────────────────
+    // ── Statut ────────────────────────────────────────────────────────────────
 
     fun setStatus(id: String, status: CombatStatus) = update(id) { copy(status = status) }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun update(id: String, block: CombatParticipant.() -> CombatParticipant) =
         _state.update { s ->
@@ -205,65 +233,5 @@ class CombatViewModel : ViewModel() {
             gson.fromJson(json, Array<SlotJson>::class.java)
                 .map { SpellSlotDisplay(it.level, it.remaining, it.max) }
         }.getOrDefault(emptyList())
-    }
-
-    private fun loadTestCombatData() {
-        val participants = listOf(
-            CombatParticipant(name = "Aelindra", type = ParticipantType.PJ,
-                currentHp = 40, maxHp = 65, hasMana = false,
-                spellSlots = listOf(SpellSlotDisplay(1,3,4), SpellSlotDisplay(2,1,2), SpellSlotDisplay(3,0,1)),
-                initiative = 18, initiativeBonus = 2, conditions = listOf("Empoisonné"),
-                avatarColor = Color(0xFF7C6AF7), avatarLetter = "A"),
-            CombatParticipant(name = "Thorin", type = ParticipantType.PJ,
-                currentHp = 72, maxHp = 80, hasMana = true, currentMana = 4, maxMana = 10,
-                initiative = 14, avatarColor = Color(0xFF5DE8C1), avatarLetter = "T"),
-            CombatParticipant(name = "Gobelin archer", type = ParticipantType.MONSTER,
-                currentHp = 8, maxHp = 14, initiative = 12,
-                avatarColor = Color(0xFFF7716A), avatarLetter = "G"),
-            CombatParticipant(name = "Gobelin 2", type = ParticipantType.MONSTER,
-                currentHp = 0, maxHp = 14, initiative = 9, status = CombatStatus.KO,
-                avatarColor = Color(0xFFF7716A), avatarLetter = "G"),
-            CombatParticipant(name = "Chef de guerre", type = ParticipantType.PNJ,
-                currentHp = 30, maxHp = 45, initiative = 16, pendingBonus = 3,
-                avatarColor = Color(0xFFF59E0B), avatarLetter = "C"),
-        )
-        // Simuler round 2 : Aelindra(20) a joué, Thorin(14) est actif
-        val aelindra = participants.first { it.name == "Aelindra" }
-        val thorin   = participants.first { it.name == "Thorin" }
-        _state.value = CombatState(
-            participants    = participants,
-            isStarted       = true,
-            round           = 2,
-            playedThisRound = listOf(aelindra.id),
-            currentId       = thorin.id,
-        )
-    }
-
-    private fun loadTestSetupData() {
-        val participants = listOf(
-            CombatParticipant(
-                name = "Aelindra", type = ParticipantType.PJ,
-                currentHp = 40, maxHp = 65, initiative = 18,
-                linkedSocketId = "socket_1",
-                avatarColor = Color(0xFF7C6AF7), avatarLetter = "A",
-            ),
-            CombatParticipant(
-                name = "Thorin", type = ParticipantType.PJ,
-                currentHp = 72, maxHp = 80, initiative = 0,   // pas encore saisi
-                linkedSocketId = "socket_2",
-                avatarColor = Color(0xFF5DE8C1), avatarLetter = "T",
-            ),
-            CombatParticipant(
-                name = "Gobelin archer", type = ParticipantType.MONSTER,
-                currentHp = 14, maxHp = 14, initiative = 12,
-                avatarColor = Color(0xFFF7716A), avatarLetter = "G",
-            ),
-        )
-        _state.value = CombatState(
-            isStarted       = false,   // ← ouvre sur le setup
-            participants    = participants,
-            playedThisRound = emptyList(),
-            currentId       = null,
-        )
     }
 }

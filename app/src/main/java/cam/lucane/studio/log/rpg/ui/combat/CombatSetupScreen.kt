@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.session.PlayerSlot
 import cam.lucane.studio.log.rpg.ui.combat.model.CombatState
 import cam.lucane.studio.log.rpg.ui.combat.model.ParticipantType
@@ -21,24 +22,34 @@ import cam.lucane.studio.log.rpg.ui.components.common.AccordionSection
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
 import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 
-private enum class SetupSection { PLAYERS, MONSTERS }
+private enum class SetupSection { PLAYERS, LOCAL_CHARS, MONSTERS }
 
 @Composable
 fun CombatSetupScreen(
     state               : CombatState,
     connectedPlayers    : List<PlayerSlot>,
+    localCharacters     : List<Character>,
     onAddSessionPlayers : (List<PlayerSlot>) -> Unit,
+    onAddLocalCharacter : (Character) -> Unit,
     onAddParticipant    : (name: String, type: ParticipantType, maxHp: Int, initiative: Int) -> Unit,
     onSetInitiative     : (id: String, value: Int) -> Unit,
     onRemove            : (id: String) -> Unit,
     onLaunch            : () -> Unit,
     onCancel            : () -> Unit,
 ) {
-    val hasPlayers      = connectedPlayers.isNotEmpty()
-    var expanded        by remember { mutableStateOf(if (hasPlayers) SetupSection.PLAYERS else SetupSection.MONSTERS) }
-    // Aucun joueur sélectionné par défaut
+    val hasPlayers     = connectedPlayers.isNotEmpty()
+    val hasLocalChars  = localCharacters.isNotEmpty()
+
+    // Section ouverte par défaut : joueurs connectés > persos locaux > monstres
+    val defaultSection = when {
+        hasPlayers    -> SetupSection.PLAYERS
+        hasLocalChars -> SetupSection.LOCAL_CHARS
+        else          -> SetupSection.MONSTERS
+    }
+    var expanded        by remember { mutableStateOf(defaultSection) }
     var selectedSockets by remember { mutableStateOf(emptySet<String>()) }
-    val canLaunch       = state.participants.isNotEmpty() && state.participants.all { it.initiative != 0 }
+
+    val canLaunch = state.participants.isNotEmpty() && state.participants.all { it.initiative != 0 }
 
     Column(
         modifier = Modifier
@@ -46,9 +57,13 @@ fun CombatSetupScreen(
             .background(ColorsSystem.BackgroundApp)
             .systemBarsPadding(),
     ) {
-        // Header
+        // ── Header ────────────────────────────────────────────────────────────
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 5.dp).background(ColorsSystem.BackgroundCard).padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 5.dp)
+                .background(ColorsSystem.BackgroundCard)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment     = Alignment.CenterVertically,
         ) {
@@ -67,10 +82,16 @@ fun CombatSetupScreen(
 
         HorizontalDivider(color = ColorsSystem.Divider)
 
+        // ── Sections ──────────────────────────────────────────────────────────
         Column(
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+
+            // ── Joueurs connectés ─────────────────────────────────────────────
             if (hasPlayers) {
                 AccordionSection(
                     title    = "🧙  Joueurs connectés",
@@ -92,14 +113,38 @@ fun CombatSetupScreen(
                                     ?.let { onRemove(it.id) }
                             }
                         },
-                        onSetInitiative  = onSetInitiative,
+                        onSetInitiative = onSetInitiative,
                     )
                 }
             }
 
+            // ── Personnages locaux (MJ) ───────────────────────────────────────
+            AccordionSection(
+                title    = "🧑‍🤝‍🧑  Personnages locaux",
+                subtitle = "${state.participants.count { it.localCharId != null }} ajouté(s)",
+                expanded = expanded == SetupSection.LOCAL_CHARS,
+                onToggle = { expanded = SetupSection.LOCAL_CHARS },
+            ) {
+                LocalCharactersSection(
+                    localCharacters = localCharacters,
+                    participants    = state.participants,
+                    onToggle        = { character, on ->
+                        if (on) {
+                            onAddLocalCharacter(character)
+                        } else {
+                            state.participants
+                                .find { it.localCharId == character.id }
+                                ?.let { onRemove(it.id) }
+                        }
+                    },
+                    onSetInitiative = onSetInitiative,
+                )
+            }
+
+            // ── Monstres & PNJ manuels ────────────────────────────────────────
             AccordionSection(
                 title    = "👹  Monstres & PNJ",
-                subtitle = "${state.participants.count { it.linkedSocketId == null }} ajouté(s)",
+                subtitle = "${state.participants.count { it.linkedSocketId == null && it.localCharId == null }} ajouté(s)",
                 expanded = expanded == SetupSection.MONSTERS,
                 onToggle = { expanded = SetupSection.MONSTERS },
             ) {
@@ -112,13 +157,16 @@ fun CombatSetupScreen(
             }
         }
 
-        // Bouton lancer
+        // ── Bouton lancer ─────────────────────────────────────────────────────
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp).padding(bottom = 4.dp)) {
             if (!canLaunch && state.participants.isNotEmpty()) {
                 Text(
                     "Tous les participants doivent avoir une initiative.",
-                    fontSize = 10.sp, color = ColorsSystem.TextSecondary, fontFamily = NunitoFontFamily,
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                    fontSize  = 10.sp,
+                    color     = ColorsSystem.TextSecondary,
+                    fontFamily = NunitoFontFamily,
+                    modifier  = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
                 )
             }
             Button(
@@ -133,8 +181,10 @@ fun CombatSetupScreen(
             ) {
                 Text(
                     "⚔️  Lancer le combat",
-                    fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = NunitoFontFamily,
-                    color = if (canLaunch) ColorsSystem.BackgroundCard else ColorsSystem.TextSecondary,
+                    fontSize   = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = NunitoFontFamily,
+                    color      = if (canLaunch) ColorsSystem.BackgroundCard else ColorsSystem.TextSecondary,
                 )
             }
         }

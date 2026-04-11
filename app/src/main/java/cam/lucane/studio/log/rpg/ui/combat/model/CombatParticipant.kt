@@ -8,6 +8,8 @@ data class CombatParticipant(
     val name           : String,
     val type           : ParticipantType,
     val linkedSocketId : String? = null,
+    /** Rempli quand le participant vient d'un personnage local (onglet "Persos locaux"). */
+    val localCharId    : Long?   = null,
 
     // Ressources
     val currentHp  : Int,
@@ -19,8 +21,8 @@ data class CombatParticipant(
 
     // Initiative
     val initiative     : Int = 0,
-    val initiativeBonus: Int = 0,  // bonus actif, appliqué au tri
-    val pendingBonus   : Int = 0,  // bonus en attente → appliqué au début du prochain round
+    val initiativeBonus: Int = 0,
+    val pendingBonus   : Int = 0,
 
     // Combat
     val conditions: List<String> = emptyList(),
