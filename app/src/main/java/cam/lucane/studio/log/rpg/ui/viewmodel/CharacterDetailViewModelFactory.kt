@@ -7,18 +7,19 @@ import cam.lucane.studio.log.rpg.data.LogRPGDatabase
 import cam.lucane.studio.log.rpg.data.repository.CharacterRepository
 
 class CharacterDetailViewModelFactory(
-    private val characterId: Long,
-    private val application: Application  // ✅ S'assurer que c'est présent
+    private val characterId : Long,
+    private val application : Application,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CharacterDetailViewModel::class.java)) {
-            val database = LogRPGDatabase.getDatabase(application)
+            val database   = LogRPGDatabase.getDatabase(application)
             val repository = CharacterRepository(
-                database.characterDao(),
-                database.abilityDao(),
-                database.itemDao(),
-                database.noteDao()
+                characterDao = database.characterDao(),
+                abilityDao   = database.abilityDao(),
+                itemDao      = database.itemDao(),
+                noteDao      = database.noteDao(),
+                statDao      = database.statDao(),   // ← ajout
             )
             @Suppress("UNCHECKED_CAST")
             return CharacterDetailViewModel(characterId, repository, application) as T

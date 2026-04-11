@@ -12,42 +12,38 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CharacterListViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = LogRPGDatabase.getDatabase(application)
+
+    private val database   = LogRPGDatabase.getDatabase(application)
     private val repository = CharacterRepository(
-        database.characterDao(),
-        database.abilityDao(),
-        database.itemDao(),
-        database.noteDao()
+        characterDao = database.characterDao(),
+        abilityDao   = database.abilityDao(),
+        itemDao      = database.itemDao(),
+        noteDao      = database.noteDao(),
+        statDao      = database.statDao(),   // ← ajout
     )
-    
+
     val characters: StateFlow<List<Character>> = repository.getAllCharacters()
         .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            scope        = viewModelScope,
+            started      = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
         )
-    
+
     fun createCharacter(name: String, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
             val id = repository.createCharacter(name)
             onCreated(id)
         }
     }
-    
+
     fun deleteCharacter(character: Character) {
-        viewModelScope.launch {
-            repository.deleteCharacter(character)
-        }
+        viewModelScope.launch { repository.deleteCharacter(character) }
     }
-    
+
     fun importCharacter(json: String, onSuccess: (Long) -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             val characterId = repository.importCharacter(json)
-            if (characterId != null) {
-                onSuccess(characterId)
-            } else {
-                onError()
-            }
+            if (characterId != null) onSuccess(characterId) else onError()
         }
     }
 }
