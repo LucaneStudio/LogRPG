@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cam.lucane.studio.log.rpg.ui.components.common.buttons.DotButton
 import cam.lucane.studio.log.rpg.ui.theme.ColorsSystem
+import cam.lucane.studio.log.rpg.ui.theme.NunitoFontFamily
 import cam.lucane.studio.log.rpg.ui.utils.getAccentColorByCharacterId
 import cam.lucane.studio.log.rpg.ui.viewmodel.StatsViewModel
 
@@ -43,45 +44,64 @@ fun StatsTab(characterId: Long) {
     )
     val ui by viewModel.uiState.collectAsState()
     val mainColor = getAccentColorByCharacterId(characterId)
-    Box(modifier = Modifier.fillMaxSize().background(ColorsSystem.BackgroundApp)) {
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(ColorsSystem.BackgroundApp)) {
 
         LazyColumn(
-            modifier        = Modifier.fillMaxSize(),
-            contentPadding  = PaddingValues(start = 16.dp, end = 16.dp, bottom = 12.dp),
+            modifier            = Modifier.fillMaxSize(),
+            contentPadding      = PaddingValues(top = 2.dp, start = 16.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             items(ui.sections, key = { it.section.id }) { data ->
                 val isThisEditing  = ui.editingSectionId == data.section.id
                 val anotherEditing = ui.editingSectionId != null && !isThisEditing
 
                 StatSectionCard(
-                    data = data,
-                    isEditing = isThisEditing,
-                    onEditToggle = {
+                    data                 = data,
+                    isEditing            = isThisEditing,
+                    onEditToggle         = {
                         if (isThisEditing) viewModel.stopEdit()
                         else               viewModel.startEdit(data.section.id)
                     },
                     onSectionTitleChange = { viewModel.updateSectionTitle(data.section.id, it) },
-                    onDeleteSection = { viewModel.deleteSection(data.section) },
-                    onWidgetChange = viewModel::updateWidget,
-                    onWidgetDelete = viewModel::deleteWidget,
-                    onAddWidget = { viewModel.openAddWidgetSheet(data.section.id) },
-                    mainColor = mainColor,
+                    onDeleteSection      = { viewModel.deleteSection(data.section) },
+                    onWidgetChange       = viewModel::updateWidget,
+                    onWidgetDelete       = viewModel::deleteWidget,
+                    onAddWidget          = { viewModel.openAddWidgetSheet(data.section.id) },
+                    mainColor            = mainColor,
                     modifier             = Modifier.alpha(if (anotherEditing) 0.4f else 1f),
                 )
             }
 
-            // Fantôme "nouvelle section" visible uniquement hors mode édition
+            // Boutons d'action — visibles uniquement hors mode édition
             if (ui.editingSectionId == null) {
                 item {
-                    DotButton(
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        label = "＋ Ajouter une section",
-                        dashColor = mainColor.copy(0.4f),
-                        labelColor = mainColor,
-                        onClick = viewModel::openAddSectionSheet
-                    )
+                    Column(
+                        modifier            = Modifier.fillMaxWidth(0.9f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        DotButton(
+                            modifier   = Modifier.fillMaxWidth(),
+                            label      = "＋ Ajouter une section",
+                            dashColor  = mainColor.copy(0.4f),
+                            labelColor = mainColor,
+                            onClick    = viewModel::openAddSectionSheet,
+                        )
+
+                        if(ui.sections.isEmpty()) {
+                            DotButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                label = "✦ Depuis un template",
+                                dashColor = mainColor.copy(0.4f),
+                                labelColor = mainColor,
+                                onClick = viewModel::openTemplateSheet,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -97,11 +117,49 @@ fun StatsTab(characterId: Long) {
     }
 
     if (ui.showAddWidgetSheet) {
-        val title = ui.sections.firstOrNull { it.section.id == ui.targetSectionId }?.section?.title.orEmpty()
+        val title = ui.sections
+            .firstOrNull { it.section.id == ui.targetSectionId }?.section?.title.orEmpty()
         AddWidgetBottomSheet(
             sectionTitle = title,
             onDismiss    = viewModel::closeAddWidgetSheet,
             onConfirm    = viewModel::addWidget,
+        )
+    }
+
+    if (ui.showTemplateSheet) {
+        TemplatePickerSheet(
+            hasSections = ui.sections.isNotEmpty(),
+            onDismiss   = viewModel::closeTemplateSheet,
+            onConfirm   = viewModel::applyTemplate,
+        )
+    }
+}
+
+// ── Bouton "Depuis un template" ───────────────────────────────────────────────
+
+@Composable
+private fun TemplateButton(
+    modifier : Modifier = Modifier,
+    mainColor: Color,
+    onClick  : () -> Unit,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(mainColor.copy(0.07f))
+            .border(1.dp, mainColor.copy(0.25f), shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment     = Alignment.CenterVertically,
+    ) {
+        Text(
+            text       = "✦ Depuis un template",
+            fontSize   = 12.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color      = mainColor,
+            fontFamily = NunitoFontFamily,
         )
     }
 }

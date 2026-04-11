@@ -12,23 +12,25 @@ import cam.lucane.studio.log.rpg.data.entity.WidgetAccentColor
 import cam.lucane.studio.log.rpg.data.entity.WidgetType
 import cam.lucane.studio.log.rpg.data.repository.StatRepository
 import cam.lucane.studio.log.rpg.data.repository.StatSectionWithWidgets
+import cam.lucane.studio.log.rpg.data.template.CharacterTemplate
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class StatsUiState(
-    val sections: List<StatSectionWithWidgets> = emptyList(),
+    val sections           : List<StatSectionWithWidgets> = emptyList(),
     /** Id de la section en cours d'édition. Null = aucune. */
-    val editingSectionId: Long? = null,
-    val showAddSectionSheet: Boolean = false,
-    val showAddWidgetSheet: Boolean = false,
+    val editingSectionId   : Long?    = null,
+    val showAddSectionSheet: Boolean  = false,
+    val showAddWidgetSheet : Boolean  = false,
+    val showTemplateSheet  : Boolean  = false,
     /** Section cible lors de l'ouverture du sheet d'ajout de widget. */
-    val targetSectionId: Long? = null,
+    val targetSectionId    : Long?    = null,
 )
 
 class StatsViewModel(
     private val characterId: Long,
-    private val repository: StatRepository,
-    application: Application,
+    private val repository : StatRepository,
+    application            : Application,
 ) : AndroidViewModel(application) {
 
     private val _ui = MutableStateFlow(StatsUiState())
@@ -55,6 +57,9 @@ class StatsViewModel(
 
     fun closeAddWidgetSheet() =
         _ui.update { it.copy(showAddWidgetSheet = false, targetSectionId = null) }
+
+    fun openTemplateSheet()  = _ui.update { it.copy(showTemplateSheet = true) }
+    fun closeTemplateSheet() = _ui.update { it.copy(showTemplateSheet = false) }
 
     // ── Sections ─────────────────────────────────────────────────────────────
 
@@ -99,6 +104,35 @@ class StatsViewModel(
 
     fun deleteWidget(widget: StatWidget) {
         viewModelScope.launch { repository.deleteWidget(widget) }
+    }
+
+    // ── Templates ────────────────────────────────────────────────────────────
+
+    /**
+     * Insère toutes les sections et widgets du [template] à la suite des existants.
+     * Les sections déjà présentes ne sont pas touchées.
+     */
+    fun applyTemplate(template: CharacterTemplate) {
+        viewModelScope.launch {
+            val offset = _ui.value.sections.size
+            template.sections.forEachIndexed { sIdx, sectionDef ->
+                val sectionId = repository.addSection(
+                    characterId = characterId,
+                    title       = sectionDef.title,
+                    position    = offset + sIdx,
+                )
+                sectionDef.widgets.forEachIndexed { wIdx, widgetDef ->
+                    repository.addWidget(
+                        sectionId   = sectionId,
+                        title       = widgetDef.title,
+                        type        = widgetDef.type,
+                        accentColor = widgetDef.accentColor,
+                        position    = wIdx,
+                    )
+                }
+            }
+            closeTemplateSheet()
+        }
     }
 
     // ── Factory ──────────────────────────────────────────────────────────────
