@@ -17,8 +17,8 @@ android {
         applicationId = "cam.lucane.studio.log.rpg"
         minSdk = 30
         targetSdk = 35
-        versionCode = 2
-        versionName = "v1.2"
+        versionCode = 3
+        versionName = "v1.3.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -27,9 +27,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            isDebuggable = true
+
+            resValue("string", "app_name", "StellarDex (debug)")
+        }
+
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 

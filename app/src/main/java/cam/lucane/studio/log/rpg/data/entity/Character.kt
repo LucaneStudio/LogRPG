@@ -1,8 +1,10 @@
 package cam.lucane.studio.log.rpg.data.entity
 
+import android.util.Log
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 
 @Entity(tableName = "characters")
@@ -45,9 +47,9 @@ enum class ManaMode {
 // ── Spell slots ────────────────────────────────────────────────────────────
 
 data class SpellSlot(
-    val level: Int,
-    val current: Int,
-    val max: Int
+    @SerializedName("level")   val level: Int,
+    @SerializedName("current") val current: Int,
+    @SerializedName("max")     val max: Int
 ) {
     val isActive get() = max > 0
     val isDepleted get() = isActive && current == 0
@@ -59,10 +61,9 @@ data class SpellSlot(
 }
 
 fun Character.getSpellSlots(): List<SpellSlot> = try {
-    val type = object : TypeToken<List<SpellSlot>>() {}.type
-    Gson().fromJson<List<SpellSlot>>(spellSlotsJson, type)
-        ?: (1..9).map { SpellSlot(it, 0, 0) }
+    Gson().fromJson(spellSlotsJson, Array<SpellSlot>::class.java).toList()
 } catch (e: Exception) {
+    Log.e("SpellSlots", "Parse FAILED", e)
     (1..9).map { SpellSlot(it, 0, 0) }
 }
 

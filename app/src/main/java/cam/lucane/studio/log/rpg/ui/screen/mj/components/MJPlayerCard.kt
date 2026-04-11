@@ -179,7 +179,6 @@ fun MJPlayerCard(
 private fun parseSpellSlots(json: String?): List<SpellSlot> {
     if (json == null) return emptyList()
     return runCatching {
-        val type = object : TypeToken<List<SpellSlot>>() {}.type
-        Gson().fromJson<List<SpellSlot>>(json, type) ?: emptyList()
+        Gson().fromJson(json, Array<SpellSlot>::class.java).toList()
     }.getOrElse { emptyList() }
 }

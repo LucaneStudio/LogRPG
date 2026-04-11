@@ -2,6 +2,7 @@ package cam.lucane.studio.log.rpg.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import cam.lucane.studio.log.rpg.data.dao.*
 import cam.lucane.studio.log.rpg.data.entity.*
 import cam.lucane.studio.log.rpg.data.model.*
@@ -66,9 +67,17 @@ class CharacterRepository(
     }
 
     suspend fun updateSpellSlots(characterId: Long, slots: List<SpellSlot>) {
-        val c = characterDao.getCharacterByIdOnce(characterId) ?: return
+        val c = characterDao.getCharacterByIdOnce(characterId) ?: run {
+            Log.e("SpellSlots", "Character $characterId introuvable !")
+            return
+        }
         val json = gson.toJson(slots)
+        Log.d("SpellSlots", "Sauvegarde : $json")
         updateCharacter(c.copy(spellSlotsJson = json))
+
+        // Vérification lecture immédiate
+        val after = characterDao.getCharacterByIdOnce(characterId)
+        Log.d("SpellSlots", "Relu depuis DB : ${after?.spellSlotsJson}")
     }
 
     // ========== CURRENCY ==========
