@@ -3,25 +3,17 @@ package cam.lucane.studio.log.rpg.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import cam.lucane.studio.log.rpg.data.session.CombatSessionState
-import cam.lucane.studio.log.rpg.data.session.MJServer
-import cam.lucane.studio.log.rpg.data.session.PlayerSlot
-import cam.lucane.studio.log.rpg.data.session.SessionConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import cam.lucane.studio.log.rpg.data.session.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class MJViewModel (
-    application: Application,
-) : AndroidViewModel(application) {
+class MJViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val server = MJServer()
+    private val server        = MJServer()
+    private val nsdAdvertiser = NsdAdvertiser(application)
 
-    val players: StateFlow<List<PlayerSlot>> = server.players
-    val isRunning: StateFlow<Boolean> = server.isRunning
+    val players      : StateFlow<List<PlayerSlot>> = server.players
+    val isRunning    : StateFlow<Boolean>           = server.isRunning
 
     private val _sessionConfig = MutableStateFlow<SessionConfig?>(null)
     val sessionConfig: StateFlow<SessionConfig?> = _sessionConfig.asStateFlow()
@@ -37,11 +29,13 @@ class MJViewModel (
             val config = server.prepare()
             server.startListening(viewModelScope)
             _sessionConfig.value = config
+            nsdAdvertiser.start(config.port, config.token)
         }
     }
 
     fun stopSession() {
         server.stop()
+        nsdAdvertiser.stop()
         _sessionConfig.value = null
     }
 
@@ -51,6 +45,7 @@ class MJViewModel (
 
     override fun onCleared() {
         server.stop()
+        nsdAdvertiser.stop()
         super.onCleared()
     }
 }

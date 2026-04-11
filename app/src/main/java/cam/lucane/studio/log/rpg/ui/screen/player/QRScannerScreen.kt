@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -31,8 +32,9 @@ import java.util.concurrent.Executors
 
 @Composable
 fun QRScannerScreen(
-    onQRScanned: (String) -> Unit,
-    onCancel: () -> Unit
+    onQRScanned         : (String) -> Unit,
+    onEnterCodeManually : () -> Unit,
+    onCancel            : () -> Unit,
 ) {
     val context = LocalContext.current
     var hasCameraPermission by remember { mutableStateOf(false) }
@@ -52,37 +54,37 @@ fun QRScannerScreen(
             .padding(horizontal = 16.dp)
             .systemBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "REJOINDRE UNE SESSION",
-            fontSize = 10.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = ColorsSystem.TextDisabled,
+            text          = "REJOINDRE UNE SESSION",
+            fontSize      = 10.sp,
+            fontWeight    = FontWeight.ExtraBold,
+            color         = ColorsSystem.TextDisabled,
             letterSpacing = 1.5.sp,
-            fontFamily = NunitoFontFamily,
-            modifier = Modifier.align(Alignment.Start)
+            fontFamily    = NunitoFontFamily,
+            modifier      = Modifier.align(Alignment.Start),
         )
 
         Text(
-            text = "Scannez le QR Code affiché\npar votre Maître de Jeu",
-            fontSize = 13.sp,
+            text       = "Scannez le QR Code affiché\npar votre Maître de Jeu",
+            fontSize   = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = ColorsSystem.TextSecondary,
+            color      = ColorsSystem.TextSecondary,
             fontFamily = NunitoFontFamily,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign  = TextAlign.Center,
         )
 
-        // ── Zone caméra ──────────────────────────────────────────────
+        // ── Zone caméra ────────────────────────────────────────────────────────
         if (hasCameraPermission) {
             CameraPreview(
                 modifier = Modifier
                     .size(260.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .border(2.dp, ColorsSystem.Green, RoundedCornerShape(16.dp)),
-                onQRDetected = onQRScanned
+                onQRDetected = onQRScanned,
             )
         } else {
             Box(
@@ -90,27 +92,25 @@ fun QRScannerScreen(
                     .size(260.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(ColorsSystem.BackgroundCard),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text("📷", fontSize = 32.sp)
                     Text(
                         "Permission caméra requise",
-                        fontSize = 12.sp,
-                        color = ColorsSystem.TextSecondary,
-                        fontFamily = NunitoFontFamily
+                        fontSize   = 12.sp,
+                        color      = ColorsSystem.TextSecondary,
+                        fontFamily = NunitoFontFamily,
                     )
-                    TextButton(onClick = {
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }) {
+                    TextButton(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
                         Text(
                             "Autoriser",
-                            color = ColorsSystem.Green,
+                            color      = ColorsSystem.Green,
                             fontWeight = FontWeight.ExtraBold,
-                            fontFamily = NunitoFontFamily
+                            fontFamily = NunitoFontFamily,
                         )
                     }
                 }
@@ -118,115 +118,109 @@ fun QRScannerScreen(
         }
 
         Text(
-            text = "Pointez la caméra vers le QR Code",
-            fontSize = 11.sp,
-            color = ColorsSystem.TextDisabled,
-            fontFamily = NunitoFontFamily
+            text      = "Pointez la caméra vers le QR Code",
+            fontSize  = 11.sp,
+            color     = ColorsSystem.TextDisabled,
+            fontFamily = NunitoFontFamily,
         )
+
+        // ── Séparateur ─────────────────────────────────────────────────────────
+        Row(
+            modifier          = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f), color = ColorsSystem.Divider)
+            Text("ou", fontSize = 11.sp, color = ColorsSystem.TextDisabled, fontFamily = NunitoFontFamily)
+            HorizontalDivider(modifier = Modifier.weight(1f), color = ColorsSystem.Divider)
+        }
 
         Spacer(Modifier.weight(1f))
 
-        // ── Bouton annuler ────────────────────────────────────────────
-        OutlinedButton(
-            onClick = onCancel,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = ColorsSystem.Red
-            ),
-            border = androidx.compose.foundation.BorderStroke(
-                1.5.dp, ColorsSystem.Red.copy(alpha = 0.4f)
-            )
+        // ── Bouton saisie manuelle ─────────────────────────────────────────────
+        Button(
+            onClick  = onEnterCodeManually,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape    = RoundedCornerShape(14.dp),
+            colors   = ButtonDefaults.buttonColors(containerColor = AccentPurple),
         ) {
             Text(
-                "Annuler",
+                text       = "🔑  Entrer un code à la place",
                 fontWeight = FontWeight.ExtraBold,
                 fontFamily = NunitoFontFamily,
-                modifier = Modifier.padding(vertical = 4.dp)
+                color      = ColorsSystem.BackgroundCard,
             )
         }
+
+        // ── Bouton annuler ─────────────────────────────────────────────────────
+        TextButton(
+            onClick  = onCancel,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text      = "Annuler",
+                color     = ColorsSystem.TextSecondary,
+                fontFamily = NunitoFontFamily,
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
     }
 }
 
-// ── Prévisualisation caméra + analyse ML Kit ──────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Caméra MLKit (inchangée)
+// ─────────────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalGetImage::class)
 @Composable
 private fun CameraPreview(
-    modifier: Modifier = Modifier,
-    onQRDetected: (String) -> Unit
+    modifier     : Modifier,
+    onQRDetected : (String) -> Unit,
 ) {
-    val context       = LocalContext.current
+    val context        = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val executor      = remember { Executors.newSingleThreadExecutor() }
-    var scanned       by remember { mutableStateOf(false) }
-
-    // ✅ Référence au provider pour pouvoir le libérer à la destruction
-    val cameraProvider = remember { mutableStateOf<ProcessCameraProvider?>(null) }
-
-    // ✅ Libérer caméra + executor quand le composable quitte la composition
-    DisposableEffect(Unit) {
-        onDispose {
-            cameraProvider.value?.unbindAll()
-            executor.shutdown()
-        }
-    }
+    var scanned        by remember { mutableStateOf(false) }
 
     AndroidView(
         modifier = modifier,
-        factory = { ctx ->
+        factory  = { ctx ->
             val previewView = PreviewView(ctx)
-            val future = ProcessCameraProvider.getInstance(ctx)
+            val executor    = Executors.newSingleThreadExecutor()
+            val future      = ProcessCameraProvider.getInstance(ctx)
 
             future.addListener({
                 val provider = future.get()
-                cameraProvider.value = provider
-
-                val preview = Preview.Builder().build().also {
+                val preview  = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
-
-                val analyzer = ImageAnalysis.Builder()
+                val scanner  = BarcodeScanning.getClient()
+                val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
-                    .also { analysis ->
-                        analysis.setAnalyzer(executor) { imageProxy ->
-                            if (!scanned) {
-                                imageProxy.image?.let { mediaImage ->
-                                    val image = InputImage.fromMediaImage(
-                                        mediaImage,
-                                        imageProxy.imageInfo.rotationDegrees
-                                    )
-                                    BarcodeScanning.getClient()
-                                        .process(image)
-                                        .addOnSuccessListener { barcodes ->
-                                            barcodes
-                                                .firstOrNull { it.format == Barcode.FORMAT_QR_CODE }
-                                                ?.rawValue
-                                                ?.let { value ->
-                                                    scanned = true
-                                                    // ✅ Libérer la caméra dès le scan réussi
-                                                    provider.unbindAll()
-                                                    onQRDetected(value)
-                                                }
-                                        }
-                                        .addOnCompleteListener { imageProxy.close() }
-                                } ?: imageProxy.close()
+                    .also { ia ->
+                        ia.setAnalyzer(executor) { proxy ->
+                            if (scanned) { proxy.close(); return@setAnalyzer }
+                            val mediaImage = proxy.image
+                            if (mediaImage != null) {
+                                val image = InputImage.fromMediaImage(mediaImage, proxy.imageInfo.rotationDegrees)
+                                scanner.process(image)
+                                    .addOnSuccessListener { barcodes ->
+                                        barcodes.firstOrNull { it.format == Barcode.FORMAT_QR_CODE }
+                                            ?.rawValue
+                                            ?.let {
+                                                scanned = true
+                                                onQRDetected(it)
+                                            }
+                                    }
+                                    .addOnCompleteListener { proxy.close() }
                             } else {
-                                imageProxy.close()
+                                proxy.close()
                             }
                         }
                     }
-
                 runCatching {
                     provider.unbindAll()
-                    provider.bindToLifecycle(
-                        lifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
-                        preview,
-                        analyzer
-                    )
+                    provider.bindToLifecycle(lifecycleOwner, androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
                 }
             }, ContextCompat.getMainExecutor(ctx))
 

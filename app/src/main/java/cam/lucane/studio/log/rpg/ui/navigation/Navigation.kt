@@ -80,12 +80,15 @@ fun LogRPGNavigation(navController: NavHostController) {
                 playerName        = playerSessionViewModel.playerName.collectAsState().value,
                 onNameChange      = playerSessionViewModel::setPlayerName,
                 onQRScanned       = playerSessionViewModel::onQRScanned,
+                onCodeEntered     = { code, onResult ->          // ← nouveau
+                    playerSessionViewModel.discoverByCode(code, onResult)
+                },
                 onConnect         = playerSessionViewModel::connect,
                 onCharacterPicked = { character ->
                     playerSessionViewModel.shareCharacter(character)
                     navController.popBackStack()
                 },
-                onCancel          = { navController.popBackStack() }
+                onCancel          = { navController.popBackStack() },
             )
         }
 
@@ -96,15 +99,19 @@ fun LogRPGNavigation(navController: NavHostController) {
                 playerName        = playerSessionViewModel.playerName.collectAsState().value,
                 onNameChange      = playerSessionViewModel::setPlayerName,
                 onQRScanned       = playerSessionViewModel::onQRScanned,
+                onCodeEntered     = { code, onResult ->          // ← nouveau
+                    playerSessionViewModel.discoverByCode(code, onResult)
+                },
                 onConnect         = playerSessionViewModel::connect,
                 onCharacterPicked = { character ->
                     playerSessionViewModel.shareCharacter(character)
                     navController.popBackStack()
                 },
                 onCancel          = { navController.popBackStack() },
-                startStep         = JoinStep.PICK
+                startStep         = JoinStep.PICK,
             )
         }
+
         composable(Routes.COMBAT) {
             CombatScreen(
                 onNavigateBack = { navController.popBackStack() }

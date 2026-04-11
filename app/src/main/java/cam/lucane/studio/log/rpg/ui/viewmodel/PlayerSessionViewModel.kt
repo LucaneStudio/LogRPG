@@ -5,20 +5,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cam.lucane.studio.log.rpg.data.entity.Character
 import cam.lucane.studio.log.rpg.data.entity.ManaMode
-import cam.lucane.studio.log.rpg.data.session.PlayerClient
-import cam.lucane.studio.log.rpg.data.session.PlayerInfo
-import cam.lucane.studio.log.rpg.data.session.SessionConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import cam.lucane.studio.log.rpg.data.session.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class PlayerSessionViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val client = PlayerClient()
+    private val client        = PlayerClient()
+    private val nsdDiscoverer = NsdDiscoverer(application)
 
     val isConnected: StateFlow<Boolean> = client.isConnected
-    val wasKicked:   StateFlow<Boolean> = client.wasKicked
+    val wasKicked  : StateFlow<Boolean> = client.wasKicked
 
     private val _playerName = MutableStateFlow("")
     val playerName: StateFlow<String> = _playerName.asStateFlow()
@@ -29,10 +26,28 @@ class PlayerSessionViewModel(application: Application) : AndroidViewModel(applic
     private val _pendingConfig = MutableStateFlow<SessionConfig?>(null)
     val pendingConfig: StateFlow<SessionConfig?> = _pendingConfig.asStateFlow()
 
+    // ── QR Code ───────────────────────────────────────────────────────────────
     fun onQRScanned(content: String): Boolean {
         val config = PlayerClient.parseQRCode(content) ?: return false
         _pendingConfig.value = config
         return true
+    }
+
+    // ── Code de session (NSD) ─────────────────────────────────────────────────
+    /**
+     * Lance la découverte réseau à partir d'un code 6 caractères.
+     * [onResult] est appelé sur le Main thread : true si la session a été trouvée.
+     */
+    fun discoverByCode(code: String, onResult: (Boolean) -> Unit) {
+        nsdDiscoverer.discover(
+            code    = code,
+            scope   = viewModelScope,
+            onFound = { config ->
+                _pendingConfig.value = config
+                onResult(true)
+            },
+            onError = { onResult(false) },
+        )
     }
 
     fun setPlayerName(name: String) {
@@ -48,12 +63,10 @@ class PlayerSessionViewModel(application: Application) : AndroidViewModel(applic
     }
 
     fun shareCharacter(character: Character) {
-        android.util.Log.d("PlayerSession", "🧙 shareCharacter → ${character.name}, playerName=${_playerName.value}")
         _sharedCharacter.value = character
         client.switchCharacter(character.toPlayerInfo())
     }
 
-    // Appelé automatiquement quand les PV/Mana changent (depuis CharacterDetailViewModel)
     fun notifyStatsChanged(character: Character) {
         if (_sharedCharacter.value?.id == character.id) {
             client.sendUpdate(character.toPlayerInfo())
@@ -62,28 +75,29 @@ class PlayerSessionViewModel(application: Application) : AndroidViewModel(applic
 
     fun disconnect() {
         client.disconnect()
+        nsdDiscoverer.stop()
         _sharedCharacter.value = null
-        _pendingConfig.value = null
+        _pendingConfig.value   = null
     }
 
     fun resetKick() {
-        // Appelé après affichage du message de kick
         disconnect()
     }
 
     override fun onCleared() {
         client.disconnect()
+        nsdDiscoverer.stop()
         super.onCleared()
     }
 
     private fun Character.toPlayerInfo() = PlayerInfo(
-        playerName = _playerName.value,
+        playerName    = _playerName.value,
         characterName = name,
         currentHealth = currentHealth + temporaryHealth,
-        maxHealth = maxHealth,
-        currentMana = currentMana,
-        maxMana = maxMana,
-        hasMana = manaMode == ManaMode.MANA,
-        spellSlotsJson = if (manaMode == ManaMode.SPELL_SLOTS) spellSlotsJson else null
+        maxHealth     = maxHealth,
+        currentMana   = currentMana,
+        maxMana       = maxMana,
+        hasMana       = manaMode == ManaMode.MANA,
+        spellSlotsJson = if (manaMode == ManaMode.SPELL_SLOTS) spellSlotsJson else null,
     )
 }
